@@ -1,0 +1,6 @@
+.flat_button{
+	-fx-background-color: Transparent;
+}
+.deleteIcon:hover{
+	-fx-image: url("..\images\Delete_active.png");
+}
