@@ -16,9 +16,9 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane id="AnchorPane" prefHeight="443.0" prefWidth="616.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="postagi.PostagiLayoutController">
+<AnchorPane id="AnchorPane" prefHeight="443.0" prefWidth="616.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="postagi.PostagiLayoutController">
    <children>
-      <BorderPane layoutX="-28.0" layoutY="14.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <BorderPane layoutX="-28.0" layoutY="14.0" prefHeight="200.0" prefWidth="200.0" styleClass="default" stylesheets="@../css/style.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <left>
             <VBox prefHeight="299.0" prefWidth="184.0" spacing="5.0" BorderPane.alignment="CENTER">
                <children>
@@ -26,7 +26,7 @@
                   <TreeView fx:id="tvTo" prefHeight="349.0" prefWidth="184.0" />
                   <HBox alignment="CENTER_LEFT" prefHeight="31.0" prefWidth="184.0" spacing="5.0">
                      <children>
-                        <TextField fx:id="tfTagFilter" prefHeight="25.0" prefWidth="137.0" promptText="FIlter by tags (#tag1,#tag2)" style="-fx-background-radius: 5;" />
+                        <TextField fx:id="tfTagFilter" prefHeight="31.0" prefWidth="142.0" promptText="FIlter by tags (#tag1,#tag2)" style="-fx-background-radius: 5;" />
                         <Button mnemonicParsing="false" onAction="#filter" styleClass="flat_button" text="Filter" />
                      </children>
                   </HBox>
@@ -39,10 +39,10 @@
          <center>
             <BorderPane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
                <top>
-                  <GridPane fx:id="grdHeader" BorderPane.alignment="CENTER">
+                  <GridPane fx:id="grdHeader" vgap="5.0" BorderPane.alignment="CENTER">
                     <columnConstraints>
-                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="140.0" minWidth="10.0" prefWidth="39.0" />
-                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="373.0" minWidth="10.0" prefWidth="373.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="140.0" minWidth="10.0" prefWidth="53.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="373.0" minWidth="10.0" prefWidth="359.0" />
                     </columnConstraints>
                     <rowConstraints>
                       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -54,21 +54,21 @@
                      <children>
                         <Label text="From" />
                         <Label text="CC" GridPane.rowIndex="1" />
-                        <Label text="TItle" GridPane.rowIndex="2" />
+                        <Label text="Subject" GridPane.rowIndex="2" />
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="3.0" GridPane.columnIndex="1">
                            <children>
-                              <TextField fx:id="tfFrom" prefHeight="25.0" prefWidth="168.0" promptText="Mail to send from" style="-fx-background-radius: 5;" />
+                              <TextField fx:id="tfFrom" prefHeight="31.0" prefWidth="211.0" promptText="Mail to send from" style="-fx-background-radius: 5;" />
                               <Label text="Password" />
-                              <PasswordField fx:id="pfPassword" promptText="Password of account" style="-fx-background-radius: 5;" />
+                              <PasswordField fx:id="pfPassword" prefHeight="31.0" prefWidth="84.0" promptText="Password of account" style="-fx-background-radius: 5;" />
                            </children>
                         </HBox>
                         <TextField fx:id="tfCC" promptText="Enter CC mails if required" style="-fx-background-radius: 5;" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                         <TextField fx:id="tfTitle" promptText="Subject of Mail" style="-fx-background-radius: 5;" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                         <Label text="Attach" GridPane.rowIndex="3" />
-                        <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                        <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="15.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
                            <children>
-                              <TextField fx:id="tfAttach" prefHeight="25.0" prefWidth="312.0" promptText="Choose Attachments if required" style="-fx-background-radius: 5;" />
-                              <Button mnemonicParsing="false" onAction="#browse" styleClass="flat_button" text="Browse" />
+                              <TextField fx:id="tfAttach" prefHeight="31.0" prefWidth="303.0" promptText="Write full path of attachment or browse" style="-fx-background-radius: 5;" />
+                              <Button mnemonicParsing="false" onAction="#browse" prefHeight="22.0" prefWidth="57.0" styleClass="flat_button" text="Browse" />
                            </children>
                         </HBox>
                         <HBox fx:id="hbAttachments" prefHeight="100.0" prefWidth="200.0" stylesheets="@../../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="4" />
@@ -103,6 +103,12 @@
                <children>
                   <Button mnemonicParsing="false" onAction="#send" prefHeight="25.0" prefWidth="74.0" styleClass="flat_button" text="Send" />
                </children>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+               <padding>
+                  <Insets top="5.0" />
+               </padding>
             </HBox>
          </bottom>
       </BorderPane>

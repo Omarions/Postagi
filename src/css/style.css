@@ -1,3 +1,10 @@
+.default{
+    -fx-background-color: #9AD2FF;
+}
+
+.textField{
+    -fx-background-radius: 5px;
+}
 .flat_button{
     -fx-background-color: 
         rgba(0,0,0,0.08),

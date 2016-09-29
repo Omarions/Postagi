@@ -26,8 +26,10 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -43,8 +45,12 @@ import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.CheckBoxTreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -130,13 +136,26 @@ public class PostagiLayoutController implements Initializable {
             public CheckBoxTreeCell<String> call(TreeView<String> param) {
                 CheckBoxTreeCell<String> cell = (CheckBoxTreeCell<String>) CheckBoxTreeCell.<String>forTreeView().call(param);
                 ContextMenu addMenu = new ContextMenu();
+                MenuItem refresh = new MenuItem("Refresh");
                 MenuItem addClient = new MenuItem("Add Client");
                 MenuItem addContact = new MenuItem("Add Contact");
 
                 EventHandler<ActionEvent> handler = (ActionEvent event) -> {
-                    //TODO
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "To be implemented later...", ButtonType.CLOSE);
-                    alert.showAndWait();
+                    String selectedMenuItem = ((MenuItem) event.getSource()).getText();
+                    if (selectedMenuItem.equalsIgnoreCase("refresh")) {
+                        clientsList.clear();
+                        clientsList.addAll(cclient.getAll());
+                        populateTreeView(clientsList);
+                    } else if (selectedMenuItem.equalsIgnoreCase("add client")) {
+                        if (showDialog("ClientLayout.fxml")) {
+                            clientsList.clear();
+                            clientsList.addAll(cclient.getAll());
+                            populateTreeView(clientsList);
+                        }
+                    } else if (selectedMenuItem.equalsIgnoreCase("add contact")) {
+                        //showDialog("ContactLayout.fxml");
+                    }
+
                 };
 
                 if (cell.getTreeItem() != null) {
@@ -151,14 +170,46 @@ public class PostagiLayoutController implements Initializable {
 
                 }
 
+                addMenu.getItems().add(refresh);
                 addMenu.getItems().add(addClient);
                 addMenu.getItems().add(addContact);
 
+                refresh.setOnAction(handler);
                 addClient.setOnAction(handler);
                 addContact.setOnAction(handler);
 
                 cell.setContextMenu(addMenu);
                 return cell;
+            }
+
+            private boolean showDialog(String url) {
+                try {
+                    FXMLLoader loader = new FXMLLoader();
+                    loader.setLocation(Postagi.class.getResource(url));
+                    AnchorPane page = (AnchorPane) loader.load();
+
+                    Stage dialogeStage = new Stage();
+                    dialogeStage.initModality(Modality.WINDOW_MODAL);
+                    dialogeStage.initOwner(Postagi.mainStage);
+                    dialogeStage.initStyle(StageStyle.UNDECORATED);
+                    dialogeStage.setY(Postagi.mainStage.getY() + 40);
+                    dialogeStage.setX(Postagi.mainStage.getX() + Postagi.mainStage.getWidth());
+
+                    Scene scene = new Scene(page);
+                    dialogeStage.setScene(scene);
+                    // Set the person into the controller.
+                    ClientLayoutController controller = loader.getController();
+                    controller.setDialogStage(dialogeStage);
+
+                    // Show the dialog and wait until the user closes it
+                    dialogeStage.showAndWait();
+
+                    return controller.saveClicked;
+
+                } catch (IOException ex) {
+                    Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+                    return false;
+                }
             }
         });
     }
