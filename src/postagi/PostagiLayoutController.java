@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -71,8 +72,10 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import javax.xml.ws.Service;
 import model.Client;
 import model.Contact;
+import org.controlsfx.dialog.ProgressDialog;
 import utils.DialogType;
 
 /**
@@ -120,11 +123,11 @@ public class PostagiLayoutController implements Initializable {
             = new Image(getClass().getResourceAsStream("/images/Delete_active.png"));
     private final Image inactiveDeleteIcon
             = new Image(getClass().getResourceAsStream("/images/Delete_inactive.png"));
-    private final Image editMenuItemIcon 
+    private final Image editMenuItemIcon
             = new Image(getClass().getResourceAsStream("/images/edit_icon.png"));
-    private final Image addMenuItemIcon 
+    private final Image addMenuItemIcon
             = new Image(getClass().getResourceAsStream("/images/add_icon.png"));
-    private final Image refreshMenuItemIcon 
+    private final Image refreshMenuItemIcon
             = new Image(getClass().getResourceAsStream("/images/arrows_refresh.png"));
 
     private final CheckBoxTreeItem<String> rootNode = new CheckBoxTreeItem<>("Customers", customersIcon);
@@ -133,7 +136,7 @@ public class PostagiLayoutController implements Initializable {
     private final ObservableList<Contact> contacts = FXCollections.observableArrayList();
     private final List<TreeItem<String>> cbTreeItems = new ArrayList<>();
     private final List<File> attachments = new ArrayList<>();
-
+    BodyPart msgBodyPart = new MimeBodyPart();
     private cClient cclient;
     boolean clientClicked = false;
 
@@ -157,14 +160,14 @@ public class PostagiLayoutController implements Initializable {
                 MenuItem editClientMenuItem = new MenuItem(EDIT_CLIENT_MENU_ITEM);
                 MenuItem editContactMenuItem = new MenuItem(EDIT_CONTACT_MENU_ITEM);
                 SeparatorMenuItem separatorMenuItem = new SeparatorMenuItem();
-                
+
                 //Add icons to the menu items
                 refreshMenuItem.setGraphic(new ImageView(refreshMenuItemIcon));
                 addClientMenuItem.setGraphic(new ImageView(addMenuItemIcon));
                 addContactMenuItem.setGraphic(new ImageView(addMenuItemIcon));
                 editClientMenuItem.setGraphic(new ImageView(editMenuItemIcon));
                 editContactMenuItem.setGraphic(new ImageView(editMenuItemIcon));
-                
+
                 EventHandler<ActionEvent> handler = (ActionEvent event) -> {
                     String selectedMenuItem = ((MenuItem) event.getSource()).getText();
                     switch (selectedMenuItem) {
@@ -218,9 +221,8 @@ public class PostagiLayoutController implements Initializable {
 
                 //add menu items to the menu
                 //addMenu.getItems().addAll(refreshMenuItem, separatorMenuItem,
-                        //addClientMenuItem, addContactMenuItem, separatorMenuItem,
-                        //editClientMenuItem, editContactMenuItem);
-                
+                //addClientMenuItem, addContactMenuItem, separatorMenuItem,
+                //editClientMenuItem, editContactMenuItem);
                 addMenu.getItems().add(refreshMenuItem);
                 addMenu.getItems().add(separatorMenuItem);
                 addMenu.getItems().add(addClientMenuItem);
@@ -228,7 +230,7 @@ public class PostagiLayoutController implements Initializable {
                 addMenu.getItems().add(separatorMenuItem);
                 addMenu.getItems().add(editClientMenuItem);
                 addMenu.getItems().add(editContactMenuItem);
-                
+
                 //assign the event handler for menu items
                 refreshMenuItem.setOnAction(handler);
                 addClientMenuItem.setOnAction(handler);
@@ -325,108 +327,26 @@ public class PostagiLayoutController implements Initializable {
      * @param event
      */
     @FXML
-    public void send(ActionEvent event) {
-
-        Properties props = new Properties();
-        props.put("mail.smtp.host", HOST);
-        props.put("mail.smtp.auth", true);
-
-        Optional<Map<String, List<String>>> parts = createMail();
-        try {
-            if (parts.isPresent()) {
-                //Extract parts from the map.
-                final String FROM = parts.get().get("from").get(0);
-                final String PASSWORD = parts.get().get("password").get(0);
-                final String SUBJECT = parts.get().get("subject").get(0);
-                final String CONTENT = parts.get().get("content").get(0);
-
-                //create the Address array for the reciepents CC addresses, and fill it
-                List<String> ccList = parts.get().get("cc");
-                InternetAddress[] addressesCC = new InternetAddress[ccList.size()];
-                if (!ccList.isEmpty()) {
-                    for (int i = 0; i < ccList.size(); i++) {
-                        try {
-                            addressesCC[i] = new InternetAddress(ccList.get(i));
-                        } catch (AddressException ex) {
-                            Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-
-                            Alert alert = new Alert(Alert.AlertType.ERROR,
-                                    ex.toString(), ButtonType.OK);
-                            alert.setHeaderText("Message Failure...");
-                            alert.showAndWait();
-                            return;
-                        }
-                    }
-                }
-                //create the Address array for the reciepents addresses, and fill it
-                InternetAddress[] addressesTo = new InternetAddress[getSelectedMails().size()];
+    public void sendHandler(ActionEvent event) {
+        Task service = new Task() {
+            @Override
+            protected Object call() throws Exception {
+                updateMessage("Sending Mail . . .");
+                updateProgress(0, getSelectedMails().size());
                 for (int i = 0; i < getSelectedMails().size(); i++) {
-                    try {
-                        addressesTo[i] = new InternetAddress(getSelectedMails().get(i));
-                    } catch (AddressException ex) {
-                        Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-
-                        Alert alert = new Alert(Alert.AlertType.ERROR,
-                                ex.toString(), ButtonType.OK);
-                        alert.setHeaderText("Message Failure...");
-                        alert.showAndWait();
-                        return;
-                    }
+                    sendMail();
+                    updateProgress(i + 1, getSelectedMails().size());
+                    updateMessage("send " + (i + 1) + " mail.");
                 }
-                //Create the session for sending the message.
-                Session session = Session.getDefaultInstance(props, new Authenticator() {
-                    @Override
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        //authenticate the sender account with user and password
-                        return new PasswordAuthentication(FROM, PASSWORD);
-                    }
-                });
-                //create the message object to be sent
-                MimeMessage message = new MimeMessage(session);
-                //set the parts of the message
-                message.setFrom(new InternetAddress(FROM));
-                message.addRecipients(Message.RecipientType.TO, addressesTo);
-                message.addRecipients(Message.RecipientType.CC, addressesCC);
-                message.setSubject(SUBJECT);
-                //Set the body of the message
-                BodyPart msgBodyPart = new MimeBodyPart();
-                msgBodyPart.setText(CONTENT);
-                Multipart multiPart = new MimeMultipart();
-                multiPart.addBodyPart(msgBodyPart);
-                //Add the attachments
-
-                if (!attachments.isEmpty()) {
-                    attachments.stream().filter(File::exists).forEach((file) -> {
-                        BodyPart attBodyPart = new MimeBodyPart();
-                        try {
-                            DataSource dataSource = new FileDataSource(file);
-                            msgBodyPart.setDataHandler(new DataHandler(dataSource));
-                            msgBodyPart.setFileName(file.getName());
-                            multiPart.addBodyPart(attBodyPart);
-                        } catch (MessagingException ex) {
-                            Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-                            Alert alert = new Alert(Alert.AlertType.ERROR,
-                                    ex.toString(), ButtonType.OK);
-                            alert.setHeaderText("Message Failure...");
-                            alert.showAndWait();
-                        }
-                    });
-
-                }
-                //send the message
-                Transport.send(message);
-                Alert alert = new Alert(Alert.AlertType.INFORMATION,
-                        "Message Sent Successfully!", ButtonType.OK);
-                alert.setHeaderText("Message Sent...");
-                alert.showAndWait();
+                updateMessage("Send all.");
+                return null;
             }
-        } catch (MessagingException ex) {
-            Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-            Alert alert = new Alert(Alert.AlertType.ERROR,
-                    ex.toString(), ButtonType.OK);
-            alert.setHeaderText("Message Failure...");
-            alert.showAndWait();
-        }
+        };
+        ProgressDialog pd = new ProgressDialog(service);
+        pd.setContentText("The app is sending mails, please be patient...");
+        pd.setHeaderText("Sending Mails...");
+        pd.setHeaderText("Send Mails");
+        pd.showAndWait();
 
     }
 
@@ -630,6 +550,134 @@ public class PostagiLayoutController implements Initializable {
         container.getChildren().addAll(btnAttachment, deleteIcon);
 
         hbAttachments.getChildren().add(container);
+    }
+
+    /**
+     * Prepare Internet addresses array of mails (CC or TO mails)
+     *
+     * @param toList the list of mails
+     * @return array of InternetAddress
+     */
+    private InternetAddress[] prepareMailsList(List<String> mailStringList) {
+        InternetAddress[] addresses = new InternetAddress[mailStringList.size()];
+        if (!mailStringList.isEmpty()) {
+            for (int i = 0; i < mailStringList.size(); i++) {
+                try {
+                    addresses[i] = new InternetAddress(mailStringList.get(i));
+                } catch (AddressException ex) {
+                    Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+                    return null;
+                }
+            }
+        }
+        return addresses;
+    }
+
+    /**
+     * Prepare Internet addresses array of To mails
+     *
+     * @param toList the list of mails
+     * @return array of InternetAddress
+     */
+    private InternetAddress[] prepareTO(List<String> toList) {
+        InternetAddress[] addressesTo = new InternetAddress[toList.size()];
+        for (int i = 0; i < toList.size(); i++) {
+            try {
+                addressesTo[i] = new InternetAddress(getSelectedMails().get(i));
+            } catch (AddressException ex) {
+                Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+                return null;
+            }
+        }
+        return addressesTo;
+    }
+
+    private void sendMail() {
+        Properties props = new Properties();
+        props.put("mail.smtp.host", HOST);
+        props.put("mail.smtp.auth", true);
+
+        Optional<Map<String, List<String>>> parts = createMail();
+        try {
+            if (parts.isPresent()) {
+                //Extract parts from the map.
+                final String FROM = parts.get().get("from").get(0);
+                final String PASSWORD = parts.get().get("password").get(0);
+                final String SUBJECT = parts.get().get("subject").get(0);
+                final String CONTENT = parts.get().get("content").get(0);
+
+                //create the Address array for the reciepents CC addresses, and fill it
+                InternetAddress[] addressesCC = prepareMailsList(parts.get().get("cc"));
+
+                //create the Address array for the reciepents addresses, and fill it
+                InternetAddress[] addressesTo = prepareMailsList(getSelectedMails());
+                //check for null addresses array.
+                if (addressesTo == null || addressesCC == null) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR,
+                            "Error in creaating message parts (To address or CC address)!", ButtonType.OK);
+                    alert.setHeaderText("Message Failure...");
+                    alert.showAndWait();
+                    return;
+                }
+
+                //Create the session for sending the message.
+                Session session = Session.getDefaultInstance(props, new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        //authenticate the sender account with user and password
+                        return new PasswordAuthentication(FROM, PASSWORD);
+                    }
+                });
+                //create the message object to be sent
+                MimeMessage message = new MimeMessage(session);
+                //set the parts of the message
+                message.setFrom(new InternetAddress(FROM));
+                message.addRecipients(Message.RecipientType.TO, addressesTo);
+                message.addRecipients(Message.RecipientType.CC, addressesCC);
+                message.setSubject(SUBJECT);
+                //Set the body of the message
+
+                msgBodyPart.setText(CONTENT);
+
+                Multipart multiPart = new MimeMultipart();
+                multiPart.addBodyPart(msgBodyPart);
+                //Add the attachments
+
+                if (!attachments.isEmpty()) {
+                    attachments.stream().filter(File::exists).forEach((file) -> {
+                        msgBodyPart = new MimeBodyPart();
+                        try {
+                            DataSource dataSource = new FileDataSource(file);
+                            msgBodyPart.setDataHandler(new DataHandler(dataSource));
+                            msgBodyPart.setFileName(file.getName());
+                            multiPart.addBodyPart(msgBodyPart);
+                        } catch (MessagingException ex) {
+                            Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+                            Alert alert = new Alert(Alert.AlertType.ERROR,
+                                    ex.toString(), ButtonType.OK);
+                            alert.setHeaderText("Message Failure...");
+                            alert.showAndWait();
+                        }
+                    });
+
+                }
+
+                message.setContent(multiPart);
+                //send the message
+                Transport.send(message);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION,
+                        "Message Sent Successfully!", ButtonType.OK);
+                alert.setHeaderText("Message Sent...");
+                alert.showAndWait();
+            }
+        } catch (MessagingException ex) {
+            Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+            Alert alert = new Alert(Alert.AlertType.ERROR,
+                    ex.toString(), ButtonType.OK);
+            alert.setHeaderText("Message Failure...");
+            alert.showAndWait();
+        }
+
     }
 
 }

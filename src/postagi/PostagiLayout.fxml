@@ -101,7 +101,7 @@
          <bottom>
             <HBox alignment="BASELINE_RIGHT" prefHeight="27.0" prefWidth="606.0" BorderPane.alignment="CENTER">
                <children>
-                  <Button mnemonicParsing="false" onAction="#send" prefHeight="25.0" prefWidth="74.0" styleClass="flat_button" text="Send" />
+                  <Button mnemonicParsing="false" onAction="#sendHandler" prefHeight="25.0" prefWidth="74.0" styleClass="flat_button" text="Send" />
                </children>
                <opaqueInsets>
                   <Insets />
