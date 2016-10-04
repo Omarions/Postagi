@@ -270,7 +270,7 @@ public class Contact {
 
     @Override
     public String toString() {
-        return getName() + "(" + getMails() + ")";
+        return getId() + ": " + getName();
     }
 
     @Override

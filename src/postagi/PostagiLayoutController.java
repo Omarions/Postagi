@@ -70,6 +70,7 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import model.Client;
 import model.Contact;
+import utils.DialogType;
 
 /**
  *
@@ -97,7 +98,10 @@ public class PostagiLayoutController implements Initializable {
     @FXML
     private TextField tfTagFilter;
 
-    final String HOST = "mail.ngc-eg.com";
+    private final String HOST = "mail.ngc-eg.com";
+    private final String REFRESH_MENU_ITEM = "Refresh";
+    private final String ADD_CLIENT_MENU_ITEM = "Add Client";
+    private final String ADD_CONTACT_MENU_ITEM = "Add Contact";
 
     private final Node customersIcon = new ImageView(
             new Image(getClass().getResourceAsStream("/images/customers_32.png")));
@@ -136,59 +140,63 @@ public class PostagiLayoutController implements Initializable {
             public CheckBoxTreeCell<String> call(TreeView<String> param) {
                 CheckBoxTreeCell<String> cell = (CheckBoxTreeCell<String>) CheckBoxTreeCell.<String>forTreeView().call(param);
                 ContextMenu addMenu = new ContextMenu();
-                MenuItem refresh = new MenuItem("Refresh");
-                MenuItem addClient = new MenuItem("Add Client");
-                MenuItem addContact = new MenuItem("Add Contact");
+                MenuItem refreshMenuItem = new MenuItem(REFRESH_MENU_ITEM);
+                MenuItem addClientMenuItem = new MenuItem(ADD_CLIENT_MENU_ITEM);
+                MenuItem addContactMenuItem = new MenuItem(ADD_CONTACT_MENU_ITEM);
 
                 EventHandler<ActionEvent> handler = (ActionEvent event) -> {
                     String selectedMenuItem = ((MenuItem) event.getSource()).getText();
-                    if (selectedMenuItem.equalsIgnoreCase("refresh")) {
-                        clientsList.clear();
-                        clientsList.addAll(cclient.getAll());
-                        populateTreeView(clientsList);
-                    } else if (selectedMenuItem.equalsIgnoreCase("add client")) {
-                        if (showDialog("ClientLayout.fxml")) {
-                            clientsList.clear();
-                            clientsList.addAll(cclient.getAll());
+                    switch (selectedMenuItem) {
+                        case REFRESH_MENU_ITEM:
+                            clientsList.setAll(cclient.getAll());
                             populateTreeView(clientsList);
-                        }
-                    } else if (selectedMenuItem.equalsIgnoreCase("add contact")) {
-                        //showDialog("ContactLayout.fxml");
+                            break;
+                        case ADD_CLIENT_MENU_ITEM:
+                            if (showDialog("ClientLayout.fxml", DialogType.CLIENT)) {
+                                clientsList.setAll(cclient.getAll());
+                                populateTreeView(clientsList);
+                            }
+                            break;
+                        case ADD_CONTACT_MENU_ITEM:
+                            if (showDialog("ContactLayout.fxml", DialogType.CONTACT)) {
+                                clientsList.setAll(cclient.getAll());
+                                populateTreeView(clientsList);
+                            }
+                            break;
                     }
 
                 };
 
-                if (cell.getTreeItem() != null) {
-                    if (!cell.getTreeItem().isLeaf()
-                            && cell.getTreeItem().getParent().equals(rootNode)) {
-                        clientClicked = true;
-                    } else if (!cell.getTreeItem().isLeaf()
-                            && !(cell.getTreeItem().getParent().getValue()
-                            .equalsIgnoreCase("customers"))) {
-                        clientClicked = false;
-                    }
-
-                }
-
-                addMenu.getItems().add(refresh);
-                addMenu.getItems().add(addClient);
-                addMenu.getItems().add(addContact);
-
-                refresh.setOnAction(handler);
-                addClient.setOnAction(handler);
-                addContact.setOnAction(handler);
-
+                //add menu items to the menu
+                addMenu.getItems().add(refreshMenuItem);
+                addMenu.getItems().add(addClientMenuItem);
+                addMenu.getItems().add(addContactMenuItem);
+                //assign the event handler for menu items
+                refreshMenuItem.setOnAction(handler);
+                addClientMenuItem.setOnAction(handler);
+                addContactMenuItem.setOnAction(handler);
+                //add the context menu to the cell
                 cell.setContextMenu(addMenu);
+
                 return cell;
             }
 
-            private boolean showDialog(String url) {
-                try {
-                    FXMLLoader loader = new FXMLLoader();
+            /**
+             * Show the dialog according to the type (client or contact)
+             *
+             * @param url the resource of fxml file that should be loaded
+             * @param flag the type of dialog (dialog for client or for contact)
+             * @return true when either button of save (save and quit or save
+             * and add new ) is clicked, otherwise returns false.
+             */
+            private boolean showDialog(String url, DialogType flag) {
+                FXMLLoader loader = new FXMLLoader();
+                Stage dialogeStage = new Stage();
+                    
+                try {    
                     loader.setLocation(Postagi.class.getResource(url));
                     AnchorPane page = (AnchorPane) loader.load();
-
-                    Stage dialogeStage = new Stage();
+                    
                     dialogeStage.initModality(Modality.WINDOW_MODAL);
                     dialogeStage.initOwner(Postagi.mainStage);
                     dialogeStage.initStyle(StageStyle.UNDECORATED);
@@ -197,19 +205,33 @@ public class PostagiLayoutController implements Initializable {
 
                     Scene scene = new Scene(page);
                     dialogeStage.setScene(scene);
-                    // Set the person into the controller.
-                    ClientLayoutController controller = loader.getController();
-                    controller.setDialogStage(dialogeStage);
+                    
+                    switch (flag) {
+                        case CLIENT:
+                            // create the controller of client layout controller
+                            ClientLayoutController clientController = loader.getController();
+                            clientController.setDialogStage(dialogeStage);
 
-                    // Show the dialog and wait until the user closes it
-                    dialogeStage.showAndWait();
+                            // Show the dialog and wait until the user closes it
+                            dialogeStage.showAndWait();
 
-                    return controller.saveClicked;
+                            return clientController.saveClicked;
+                        case CONTACT:
+                            // create the controller of contact layout controller
+                            ContactLayoutController contactController = loader.getController();
+                            contactController.setDialogStage(dialogeStage);
+
+                            // Show the dialog and wait until the user closes it
+                            dialogeStage.showAndWait();
+
+                            return contactController.isSaveClicked;
+                    }
 
                 } catch (IOException ex) {
                     Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
                     return false;
                 }
+                return false;
             }
         });
     }

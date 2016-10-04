@@ -241,16 +241,28 @@ public class Client extends Customer{
     
     @Override
     public String toString(){
-        return getName() + "(" + getEmails() + ")";
+        return getId() + ": " + getName();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof Client){ 
-           return (((Client)obj).getId() == this.getId());
-        }else{
-            throw new ClassCastException("It's not object of Client class");
-        }      
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Client other = (Client) obj;
+        if (!Objects.equals(this.idProperty, other.idProperty)) {
+            return false;
+        }
+        if (!Objects.equals(this.nameProperty, other.nameProperty)) {
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -260,6 +272,5 @@ public class Client extends Customer{
         hash = 89 * hash + Objects.hashCode(this.nameProperty);
         return hash;
     }
-    
-    
+  
 }

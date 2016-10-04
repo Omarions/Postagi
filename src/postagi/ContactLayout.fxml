@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.paint.RadialGradient?>
+<?import javafx.scene.paint.Stop?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane id="AnchorPane" prefHeight="339.0" prefWidth="437.0" styleClass="mainFxmlClass" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="postagi.ContactLayoutController">
+    <stylesheets>
+        <URL value="@/css/style.css" />
+    </stylesheets>
+   <children>
+      <GridPane hgap="2.0" layoutX="69.0" layoutY="103.0" styleClass="default" stylesheets="@../css/style.css" vgap="2.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" maxWidth="295.0" minWidth="10.0" prefWidth="94.0" />
+          <ColumnConstraints hgrow="SOMETIMES" maxWidth="471.0" minWidth="10.0" prefWidth="321.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <Label prefHeight="17.0" prefWidth="66.0" text="Name:" GridPane.rowIndex="1" />
+            <Label text="Title:" GridPane.rowIndex="2" />
+            <Label text="Mails:" GridPane.rowIndex="3" />
+            <Label text="Mobiles:" textOverrun="WORD_ELLIPSIS" wrapText="true" GridPane.rowIndex="4" />
+            <Label text="Whatsapp:" GridPane.rowIndex="5" />
+            <Label text="Skype:" GridPane.rowIndex="6" />
+            <Label text="others:" wrapText="true" GridPane.rowIndex="7" />
+            <TextField fx:id="tfName" promptText="Contact Name" styleClass="textField" stylesheets="@../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <TextField fx:id="tfTitle" promptText="The title of contact" styleClass="textField" stylesheets="@../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <TextField fx:id="tfMails" promptText="Mails separated with &quot;;&quot;" styleClass="textField" stylesheets="@../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <TextField fx:id="tfMobiles" promptText="Separated by &quot;;&quot;" styleClass="textField" stylesheets="@../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+            <TextField fx:id="tfWhatsapp" promptText="Separated by &quot;,&quot;" styleClass="textField" stylesheets="@../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+            <TextField fx:id="tfSkype" promptText="Separated by &quot;,&quot;" styleClass="textField" stylesheets="@../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+            <TextField fx:id="tfOthers" promptText="Any other contact info" styleClass="textField" stylesheets="@../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+            <Button mnemonicParsing="false" onAction="#saveHandler" prefWidth="93.0" styleClass="flat_button" stylesheets="@../css/style.css" text="Save &amp; Add New" GridPane.rowIndex="9" />
+            <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="9">
+               <children>
+                  <Button cancelButton="true" mnemonicParsing="false" onAction="#cancelHandler" styleClass="flat_button" stylesheets="@../css/style.css" text="Cancel" />
+                  <Button mnemonicParsing="false" onAction="#saveHandler" styleClass="flat_button" stylesheets="@../css/style.css" text="Save &amp; Quit" />
+               </children>
+               <GridPane.margin>
+                  <Insets />
+               </GridPane.margin>
+            </HBox>
+            <Text disable="true" fontSmoothingType="LCD" strokeLineCap="ROUND" strokeLineJoin="BEVEL" strokeType="OUTSIDE" strokeWidth="2.0" text="Contact Data" textAlignment="CENTER" wrappingWidth="236.25390625" GridPane.columnIndex="1">
+               <font>
+                  <Font name="Aparajita Bold Italic" size="37.0" />
+               </font>
+               <stroke>
+                  <RadialGradient centerX="0.45555555555555555" centerY="0.5" cycleMethod="REFLECT" radius="0.5">
+                     <stops>
+                        <Stop color="#5271bf" />
+                        <Stop color="#2e4a99" offset="0.4707903780068729" />
+                        <Stop color="WHITE" offset="1.0" />
+                     </stops>
+                  </RadialGradient>
+               </stroke>
+               <effect>
+                  <DropShadow />
+               </effect>
+            </Text>
+            <Label text="Company:" GridPane.rowIndex="8" />
+            <ComboBox fx:id="cbClient" onAction="#cbClientsChanged" prefHeight="31.0" prefWidth="324.0" promptText="Choose Company" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
+         </padding>
+      </GridPane>
+   </children>
+</AnchorPane>
