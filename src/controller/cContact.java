@@ -130,24 +130,24 @@ public class cContact {
                 rs.beforeFirst();
                 while (rs.next()) {
                     Contact cont = new Contact();
-                    cont.setId(rs.getInt("id"));
-                    cont.setName(rs.getString("name"));
+                    cont.setId(rs.getInt("cont.id"));
+                    cont.setName(rs.getString("cont.name"));
                     cont.setTitle(rs.getString("title"));
-                    cont.setMails(rs.getString("mails"));
-                    cont.setMobiles(rs.getString("mobiles"));
-                    cont.setWhatsapp(rs.getString("whatsapp"));
-                    cont.setSkype(rs.getString("skype"));
-                    cont.setOthers(rs.getString("others"));
+                    cont.setMails(rs.getString("cont.mails"));
+                    cont.setMobiles(rs.getString("cont.mobiles"));
+                    cont.setWhatsapp(rs.getString("cont.whatsapp"));
+                    cont.setSkype(rs.getString("cont.skype"));
+                    cont.setOthers(rs.getString("cont.others"));
                     
                     Client cl = new Client();
                     cl.setId(rs.getInt("client_id"));
-                    cl.setName(rs.getString("name"));
-                    cl.setAddress(rs.getString("address"));
-                    cl.setWebsite(rs.getString("website"));
+                    cl.setName(rs.getString("cl.name"));
+                    cl.setAddress(rs.getString("cl.address"));
+                    cl.setWebsite(rs.getString("cl.website"));
                     cl.setEmails(rs.getString("cl.mails"));
-                    cl.setTel(rs.getString("tel"));
-                    cl.setFax(rs.getString("fax"));
-                    cl.setTags(rs.getString("tags"));
+                    cl.setTel(rs.getString("cl.tel"));
+                    cl.setFax(rs.getString("cl.fax"));
+                    cl.setTags(rs.getString("cl.tags"));
                     
                     cont.setClient(cl);
 
@@ -189,7 +189,7 @@ public class cContact {
         return -1;
     }
 
-    public int update(Contact contact, int id) {
+    public int update(Contact contact) {
         final String INSERT_SQL = "UPDATE contact SET client_id=?, name = ?,"
                 + "title = ?, mails = ?, mobiles = ?, whatsapp = ?, skype = ?, "
                 + "others = ? WHERE id = ?";
@@ -205,7 +205,7 @@ public class cContact {
             prep.setString(6, contact.getWhatsapp());
             prep.setString(7, contact.getSkype());
             prep.setString(8, contact.getOthers());
-            prep.setInt(9, id);
+            prep.setInt(9, contact.getId());
 
             return prep.executeUpdate();
         } catch (SQLException ex) {

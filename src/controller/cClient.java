@@ -106,10 +106,10 @@ public class cClient {
                     cl.setId(rs.getInt("id"));
                     cl.setName(rs.getString("name"));
                     cl.setAddress(rs.getString("address"));
-                    cl.setFax(rs.getString("fax"));
-                    cl.setTel(rs.getString("tel"));
-                    cl.setEmails(rs.getString("mails"));
                     cl.setWebsite(rs.getString("website"));
+                    cl.setEmails(rs.getString("mails"));
+                    cl.setTel(rs.getString("tel"));
+                    cl.setFax(rs.getString("fax"));
                     cl.setTags(rs.getString("tags"));
 
                     clients.add(cl);
@@ -201,7 +201,7 @@ public class cClient {
         return -1;
     }
 
-    public int update(Client client, int id) {
+    public int update(Client client) {
         final String INSERT_SQL = "UPDATE client SET name = ?, address = ?, "
                 + "website = ?, mails = ?, tel = ?, fax = ?, tags = ? "
                 + "WHERE id = ?";
@@ -216,7 +216,7 @@ public class cClient {
             prep.setString(5, client.getTel());
             prep.setString(6, client.getFax());
             prep.setString(7, client.getTags());
-            prep.setInt(8, id);
+            prep.setInt(8, client.getId());
 
             return prep.executeUpdate();
         } catch (SQLException ex) {

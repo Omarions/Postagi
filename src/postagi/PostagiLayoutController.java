@@ -6,6 +6,7 @@
 package postagi;
 
 import controller.cClient;
+import controller.cContact;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -34,9 +35,11 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBoxTreeItem;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -102,6 +105,8 @@ public class PostagiLayoutController implements Initializable {
     private final String REFRESH_MENU_ITEM = "Refresh";
     private final String ADD_CLIENT_MENU_ITEM = "Add Client";
     private final String ADD_CONTACT_MENU_ITEM = "Add Contact";
+    private final String EDIT_CLIENT_MENU_ITEM = "Edit Client";
+    private final String EDIT_CONTACT_MENU_ITEM = "Edit Contact";
 
     private final Node customersIcon = new ImageView(
             new Image(getClass().getResourceAsStream("/images/customers_32.png")));
@@ -115,6 +120,12 @@ public class PostagiLayoutController implements Initializable {
             = new Image(getClass().getResourceAsStream("/images/Delete_active.png"));
     private final Image inactiveDeleteIcon
             = new Image(getClass().getResourceAsStream("/images/Delete_inactive.png"));
+    private final Image editMenuItemIcon 
+            = new Image(getClass().getResourceAsStream("/images/edit_icon.png"));
+    private final Image addMenuItemIcon 
+            = new Image(getClass().getResourceAsStream("/images/add_icon.png"));
+    private final Image refreshMenuItemIcon 
+            = new Image(getClass().getResourceAsStream("/images/arrows_refresh.png"));
 
     private final CheckBoxTreeItem<String> rootNode = new CheckBoxTreeItem<>("Customers", customersIcon);
 
@@ -143,7 +154,17 @@ public class PostagiLayoutController implements Initializable {
                 MenuItem refreshMenuItem = new MenuItem(REFRESH_MENU_ITEM);
                 MenuItem addClientMenuItem = new MenuItem(ADD_CLIENT_MENU_ITEM);
                 MenuItem addContactMenuItem = new MenuItem(ADD_CONTACT_MENU_ITEM);
-
+                MenuItem editClientMenuItem = new MenuItem(EDIT_CLIENT_MENU_ITEM);
+                MenuItem editContactMenuItem = new MenuItem(EDIT_CONTACT_MENU_ITEM);
+                SeparatorMenuItem separatorMenuItem = new SeparatorMenuItem();
+                
+                //Add icons to the menu items
+                refreshMenuItem.setGraphic(new ImageView(refreshMenuItemIcon));
+                addClientMenuItem.setGraphic(new ImageView(addMenuItemIcon));
+                addContactMenuItem.setGraphic(new ImageView(addMenuItemIcon));
+                editClientMenuItem.setGraphic(new ImageView(editMenuItemIcon));
+                editContactMenuItem.setGraphic(new ImageView(editMenuItemIcon));
+                
                 EventHandler<ActionEvent> handler = (ActionEvent event) -> {
                     String selectedMenuItem = ((MenuItem) event.getSource()).getText();
                     switch (selectedMenuItem) {
@@ -152,29 +173,68 @@ public class PostagiLayoutController implements Initializable {
                             populateTreeView(clientsList);
                             break;
                         case ADD_CLIENT_MENU_ITEM:
-                            if (showDialog("ClientLayout.fxml", DialogType.CLIENT)) {
+                            if (showDialog("ClientLayout.fxml", DialogType.CLIENT, null, null)) {
                                 clientsList.setAll(cclient.getAll());
                                 populateTreeView(clientsList);
                             }
                             break;
                         case ADD_CONTACT_MENU_ITEM:
-                            if (showDialog("ContactLayout.fxml", DialogType.CONTACT)) {
+                            if (showDialog("ContactLayout.fxml", DialogType.CONTACT, null, null)) {
                                 clientsList.setAll(cclient.getAll());
                                 populateTreeView(clientsList);
                             }
+                            break;
+                        case EDIT_CLIENT_MENU_ITEM:
+                            clientsList.setAll(cclient.getAll());
+                            ChoiceDialog<Client> clientDialog = new ChoiceDialog<>(clientsList.get(0), clientsList);
+                            clientDialog.setTitle("Client Dialog");
+                            clientDialog.setHeaderText("Client to update...");
+                            clientDialog.setContentText("Choose the client to update.");
+                            Optional<Client> result = clientDialog.showAndWait();
+                            result.ifPresent((client) -> {
+                                if (showDialog("ClientLayout.fxml", DialogType.CLIENT, client, null)) {
+                                    clientsList.setAll(cclient.getAll());
+                                    populateTreeView(clientsList);
+                                }
+                            });
+                            break;
+                        case EDIT_CONTACT_MENU_ITEM:
+                            List<Contact> contactsList = new cContact().getAll();
+                            ChoiceDialog<Contact> contactDialog = new ChoiceDialog<>(contactsList.get(0), contactsList);
+                            contactDialog.setTitle("Contact Dialog");
+                            contactDialog.setHeaderText("Contact to update...");
+                            contactDialog.setContentText("Choose the contact to update.");
+                            Optional<Contact> contactResult = contactDialog.showAndWait();
+                            contactResult.ifPresent((contact) -> {
+                                if (showDialog("ContactLayout.fxml", DialogType.CONTACT, null, contact)) {
+                                    clientsList.setAll(cclient.getAll());
+                                    populateTreeView(clientsList);
+                                }
+                            });
                             break;
                     }
 
                 };
 
                 //add menu items to the menu
+                //addMenu.getItems().addAll(refreshMenuItem, separatorMenuItem,
+                        //addClientMenuItem, addContactMenuItem, separatorMenuItem,
+                        //editClientMenuItem, editContactMenuItem);
+                
                 addMenu.getItems().add(refreshMenuItem);
+                addMenu.getItems().add(separatorMenuItem);
                 addMenu.getItems().add(addClientMenuItem);
                 addMenu.getItems().add(addContactMenuItem);
+                addMenu.getItems().add(separatorMenuItem);
+                addMenu.getItems().add(editClientMenuItem);
+                addMenu.getItems().add(editContactMenuItem);
+                
                 //assign the event handler for menu items
                 refreshMenuItem.setOnAction(handler);
                 addClientMenuItem.setOnAction(handler);
                 addContactMenuItem.setOnAction(handler);
+                editClientMenuItem.setOnAction(handler);
+                editContactMenuItem.setOnAction(handler);
                 //add the context menu to the cell
                 cell.setContextMenu(addMenu);
 
@@ -189,14 +249,14 @@ public class PostagiLayoutController implements Initializable {
              * @return true when either button of save (save and quit or save
              * and add new ) is clicked, otherwise returns false.
              */
-            private boolean showDialog(String url, DialogType flag) {
+            private boolean showDialog(String url, DialogType flag, Client updateClient, Contact updateContact) {
                 FXMLLoader loader = new FXMLLoader();
                 Stage dialogeStage = new Stage();
-                    
-                try {    
+
+                try {
                     loader.setLocation(Postagi.class.getResource(url));
                     AnchorPane page = (AnchorPane) loader.load();
-                    
+
                     dialogeStage.initModality(Modality.WINDOW_MODAL);
                     dialogeStage.initOwner(Postagi.mainStage);
                     dialogeStage.initStyle(StageStyle.UNDECORATED);
@@ -205,12 +265,15 @@ public class PostagiLayoutController implements Initializable {
 
                     Scene scene = new Scene(page);
                     dialogeStage.setScene(scene);
-                    
+
                     switch (flag) {
                         case CLIENT:
                             // create the controller of client layout controller
                             ClientLayoutController clientController = loader.getController();
                             clientController.setDialogStage(dialogeStage);
+                            if (updateClient != null) {
+                                clientController.showEditableClient(updateClient);
+                            }
 
                             // Show the dialog and wait until the user closes it
                             dialogeStage.showAndWait();
@@ -220,6 +283,9 @@ public class PostagiLayoutController implements Initializable {
                             // create the controller of contact layout controller
                             ContactLayoutController contactController = loader.getController();
                             contactController.setDialogStage(dialogeStage);
+                            if (updateContact != null) {
+                                contactController.showEditableContact(updateContact);
+                            }
 
                             // Show the dialog and wait until the user closes it
                             dialogeStage.showAndWait();

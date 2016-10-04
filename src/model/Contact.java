@@ -275,13 +275,22 @@ public class Contact {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof Contact){ 
-           return (((Contact)obj).getId() == this.getId());
-        }else{
-            throw new ClassCastException("It's not object of Contact class");
-        }      
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Contact other = (Contact) obj;
+        if (!Objects.equals(this.idProperty, other.idProperty)) {
+            return false;
+        }
+        return true;
     }
-
+    
     @Override
     public int hashCode() {
         int hash = 7;

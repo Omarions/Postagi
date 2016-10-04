@@ -259,9 +259,6 @@ public class Client extends Customer{
         if (!Objects.equals(this.idProperty, other.idProperty)) {
             return false;
         }
-        if (!Objects.equals(this.nameProperty, other.nameProperty)) {
-            return false;
-        }
         return true;
     }
 
