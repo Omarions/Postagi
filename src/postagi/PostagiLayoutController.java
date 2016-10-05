@@ -84,6 +84,7 @@ import javax.xml.ws.Service;
 import model.Client;
 import model.Contact;
 import org.controlsfx.dialog.ProgressDialog;
+import utils.Constants;
 import utils.DialogType;
 
 /**
@@ -112,43 +113,16 @@ public class PostagiLayoutController implements Initializable {
     @FXML
     private TextField tfTagFilter;
 
-    private final String HOST = "mail.ngc-eg.com";
-    private final String REFRESH_MENU_ITEM = "Refresh";
-    private final String ADD_CLIENT_MENU_ITEM = "Add Client";
-    private final String ADD_CONTACT_MENU_ITEM = "Add Contact";
-    private final String EDIT_CLIENT_MENU_ITEM = "Edit Client";
-    private final String EDIT_CONTACT_MENU_ITEM = "Edit Contact";
-
-    private final Node customersIcon = new ImageView(
-            new Image(getClass().getResourceAsStream("/images/customers_32.png")));
-    private final Image mailsIcon
-            = new Image(getClass().getResourceAsStream("/images/mails.png"));
-    private final Image contactsIcon
-            = new Image(getClass().getResourceAsStream("/images/contacts.png"));
-    private final Image clientsIcon
-            = new Image(getClass().getResourceAsStream("/images/clients.png"));
-    private final Image activeDeleteIcon
-            = new Image(getClass().getResourceAsStream("/images/Delete_active.png"));
-    private final Image inactiveDeleteIcon
-            = new Image(getClass().getResourceAsStream("/images/Delete_inactive.png"));
-    private final Image editMenuItemIcon
-            = new Image(getClass().getResourceAsStream("/images/edit_icon.png"));
-    private final Image addMenuItemIcon
-            = new Image(getClass().getResourceAsStream("/images/add_icon.png"));
-    private final Image refreshMenuItemIcon
-            = new Image(getClass().getResourceAsStream("/images/arrows_refresh.png"));
-
-    private final CheckBoxTreeItem<String> rootNode = new CheckBoxTreeItem<>("Customers", customersIcon);
-
+    private ProgressDialog pd;
+    
+    private final CheckBoxTreeItem<String> rootNode = new CheckBoxTreeItem<>("Customers", Constants.CUSTOMER_ICON);
+    private final List<TreeItem<String>> cbTreeItems = new ArrayList<>();
+    
     private final ObservableList<Client> clientsList = FXCollections.observableArrayList();
     private final ObservableList<Contact> contacts = FXCollections.observableArrayList();
-    private final List<TreeItem<String>> cbTreeItems = new ArrayList<>();
     private final List<File> attachments = new ArrayList<>();
-    private BodyPart msgBodyPart = new MimeBodyPart();
-    private ProgressDialog pd;
+    private BodyPart msgBodyPart = new MimeBodyPart();   
     private cClient cclient;
-    private boolean clientClicked = false;
-    private int counter;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -164,40 +138,40 @@ public class PostagiLayoutController implements Initializable {
             public CheckBoxTreeCell<String> call(TreeView<String> param) {
                 CheckBoxTreeCell<String> cell = (CheckBoxTreeCell<String>) CheckBoxTreeCell.<String>forTreeView().call(param);
                 ContextMenu addMenu = new ContextMenu();
-                MenuItem refreshMenuItem = new MenuItem(REFRESH_MENU_ITEM);
-                MenuItem addClientMenuItem = new MenuItem(ADD_CLIENT_MENU_ITEM);
-                MenuItem addContactMenuItem = new MenuItem(ADD_CONTACT_MENU_ITEM);
-                MenuItem editClientMenuItem = new MenuItem(EDIT_CLIENT_MENU_ITEM);
-                MenuItem editContactMenuItem = new MenuItem(EDIT_CONTACT_MENU_ITEM);
+                MenuItem refreshMenuItem = new MenuItem(Constants.REFRESH_MENU_ITEM);
+                MenuItem addClientMenuItem = new MenuItem(Constants.ADD_CLIENT_MENU_ITEM);
+                MenuItem addContactMenuItem = new MenuItem(Constants.ADD_CONTACT_MENU_ITEM);
+                MenuItem editClientMenuItem = new MenuItem(Constants.EDIT_CLIENT_MENU_ITEM);
+                MenuItem editContactMenuItem = new MenuItem(Constants.EDIT_CONTACT_MENU_ITEM);
                 SeparatorMenuItem separatorMenuItem = new SeparatorMenuItem();
 
                 //Add icons to the menu items
-                refreshMenuItem.setGraphic(new ImageView(refreshMenuItemIcon));
-                addClientMenuItem.setGraphic(new ImageView(addMenuItemIcon));
-                addContactMenuItem.setGraphic(new ImageView(addMenuItemIcon));
-                editClientMenuItem.setGraphic(new ImageView(editMenuItemIcon));
-                editContactMenuItem.setGraphic(new ImageView(editMenuItemIcon));
+                refreshMenuItem.setGraphic(new ImageView(Constants.REFRESH_MENU_ITEM_ICON));
+                addClientMenuItem.setGraphic(new ImageView(Constants.ADD_MENU_ITEM_ICON));
+                addContactMenuItem.setGraphic(new ImageView(Constants.ADD_MENU_ITEM_ICON));
+                editClientMenuItem.setGraphic(new ImageView(Constants.EDIT_MENU_ITEM_ICON));
+                editContactMenuItem.setGraphic(new ImageView(Constants.EDIT_MENU_ITEM_ICON));
 
                 EventHandler<ActionEvent> handler = (ActionEvent event) -> {
                     String selectedMenuItem = ((MenuItem) event.getSource()).getText();
                     switch (selectedMenuItem) {
-                        case REFRESH_MENU_ITEM:
+                        case Constants.REFRESH_MENU_ITEM:
                             fillClientsList();
                             populateTreeView(clientsList);
                             break;
-                        case ADD_CLIENT_MENU_ITEM:
+                        case Constants.ADD_CLIENT_MENU_ITEM:
                             if (showDialog("ClientLayout.fxml", DialogType.CLIENT, null, null)) {
                                 fillClientsList();
                                 populateTreeView(clientsList);
                             }
                             break;
-                        case ADD_CONTACT_MENU_ITEM:
+                        case Constants.ADD_CONTACT_MENU_ITEM:
                             if (showDialog("ContactLayout.fxml", DialogType.CONTACT, null, null)) {
                                 fillClientsList();
                                 populateTreeView(clientsList);
                             }
                             break;
-                        case EDIT_CLIENT_MENU_ITEM:
+                        case Constants.EDIT_CLIENT_MENU_ITEM:
                             fillClientsList();
                             ChoiceDialog<Client> clientDialog = new ChoiceDialog<>(clientsList.get(0), clientsList);
                             clientDialog.setTitle("Client Dialog");
@@ -211,7 +185,7 @@ public class PostagiLayoutController implements Initializable {
                                 }
                             });
                             break;
-                        case EDIT_CONTACT_MENU_ITEM:
+                        case Constants.EDIT_CONTACT_MENU_ITEM:
                             List<Contact> contactsList = new cContact().getAll();
                             ChoiceDialog<Contact> contactDialog = new ChoiceDialog<>(contactsList.get(0), contactsList);
                             contactDialog.setTitle("Contact Dialog");
@@ -414,13 +388,13 @@ public class PostagiLayoutController implements Initializable {
 
         clients.stream().forEach((client) -> {
             CheckBoxTreeItem<String> clientNode
-                    = new CheckBoxTreeItem<>(client.getName(), new ImageView(clientsIcon));
+                    = new CheckBoxTreeItem<>(client.getName(), new ImageView(Constants.CLIENT_ICON));
 
             rootNode.getChildren().add(clientNode);
 
             List<String> clientMails = extractMails(client.getEmails());
             clientMails.stream().map((mail)
-                    -> new CheckBoxTreeItem<>(mail, new ImageView(mailsIcon)))
+                    -> new CheckBoxTreeItem<>(mail, new ImageView(Constants.MAIL_ICON)))
                     .forEach((mailLeaf) -> {
                         clientNode.getChildren().add(mailLeaf);
                         cbTreeItems.add(mailLeaf);
@@ -432,11 +406,11 @@ public class PostagiLayoutController implements Initializable {
             contacts.stream().forEach((contact) -> {
                 List<String> contactMails = extractMails(contact.getMails());
                 CheckBoxTreeItem<String> contactNode
-                        = new CheckBoxTreeItem<>(contact.getName(), new ImageView(contactsIcon));
+                        = new CheckBoxTreeItem<>(contact.getName(), new ImageView(Constants.CONTACT_ICON));
 
                 clientNode.getChildren().add(contactNode);
                 contactMails.stream().map((mail)
-                        -> new CheckBoxTreeItem<>(mail, new ImageView(mailsIcon)))
+                        -> new CheckBoxTreeItem<>(mail, new ImageView(Constants.MAIL_ICON)))
                         .forEach((mailLeaf) -> {
                             contactNode.getChildren().add(mailLeaf);
                             cbTreeItems.add(mailLeaf);
@@ -538,7 +512,7 @@ public class PostagiLayoutController implements Initializable {
         container.getStyleClass().add("flat_button");
         container.setSpacing(3);
 
-        ImageView deleteIcon = new ImageView(inactiveDeleteIcon);
+        ImageView deleteIcon = new ImageView(Constants.INACTIVE_DELETE_ICON);
         deleteIcon.setId("deleteIcon");
         System.out.println(deleteIcon.getId());
 
@@ -556,13 +530,8 @@ public class PostagiLayoutController implements Initializable {
                     Desktop desktop = Desktop.getDesktop();
                     desktop.open(selectedFile);
                 } catch (IOException ex) {
-
                     Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-                    Alert alert = new Alert(Alert.AlertType.ERROR,
-                            "You have no supported application to open the file!",
-                            ButtonType.OK);
-                    alert.setHeaderText("Open File Error...");
-                    alert.showAndWait();
+                    showErrorDialog("Open File Error...", "There is no supported application to open the file!");            
                 }
             }
         });
@@ -608,7 +577,7 @@ public class PostagiLayoutController implements Initializable {
      */
     private boolean sendMail(String to) {
         Properties props = new Properties();
-        props.put("mail.smtp.host", HOST);
+        props.put("mail.smtp.host", Constants.HOST);
         props.put("mail.smtp.auth", true);
 
         Optional<Map<String, List<String>>> parts = createMail();
@@ -627,10 +596,7 @@ public class PostagiLayoutController implements Initializable {
                 //InternetAddress[] addressesTo = prepareMailsList(getSelectedMails());
                 //check for null addresses array.
                 if (addressesCC == null) {
-                    Alert alert = new Alert(Alert.AlertType.ERROR,
-                            "Error in creaating message parts (To address or CC address)!", ButtonType.OK);
-                    alert.setHeaderText("Message Failure...");
-                    alert.showAndWait();
+                    showErrorDialog("Message Error...", "Error in creating CC address)!");                         
                     return false;
                 }
 
@@ -656,7 +622,6 @@ public class PostagiLayoutController implements Initializable {
                 Multipart multiPart = new MimeMultipart();
                 multiPart.addBodyPart(msgBodyPart);
                 //Add the attachments
-
                 if (!attachments.isEmpty()) {
                     attachments.stream().filter(File::exists).forEach((file) -> {
                         msgBodyPart = new MimeBodyPart();
@@ -667,10 +632,7 @@ public class PostagiLayoutController implements Initializable {
                             multiPart.addBodyPart(msgBodyPart);
                         } catch (MessagingException ex) {
                             Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-                            Alert alert = new Alert(Alert.AlertType.ERROR,
-                                    ex.toString(), ButtonType.OK);
-                            alert.setHeaderText("Message Failure...");
-                            alert.showAndWait();
+                            showExceptionDialog("Message Error...","Exception happen while creating the attachment!", ex.toString());
                         }
                     });
 
@@ -683,7 +645,7 @@ public class PostagiLayoutController implements Initializable {
             }
         } catch (MessagingException ex) {
             Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-            showErrorDialog("Message Failure...", ex.toString());
+            showExceptionDialog("Message Failure...", "Exception happen while send message!", ex.toString());
             return false;
         }
         return false;
@@ -714,4 +676,10 @@ public class PostagiLayoutController implements Initializable {
         }
     }
 
+    private void showExceptionDialog(String header, String msg, String exception){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setHeaderText(header);
+        alert.setContentText(msg);
+        alert.getDialogPane().setContent(new TextArea(exception));
+    }
 }
