@@ -55,7 +55,7 @@ public class ClientLayoutController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        //crate the object of cClient controller to communicate with DB
+        //create the object of cClient controller to communicate with DB
         mCClient = new cClient();
     }
 
@@ -205,6 +205,10 @@ public class ClientLayoutController implements Initializable {
         tfTags.setText("");
     }
 
+    /**
+     * Populate the window controls with client data
+     * @param client to be shown
+     */
     private void populateWindow(Client client) {
         tfName.setText(client.getName());
         tfAddress.setText(client.getAddress());

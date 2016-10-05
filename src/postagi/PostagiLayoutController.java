@@ -45,6 +45,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBoxTreeItem;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.SeparatorMenuItem;
@@ -141,7 +142,11 @@ public class PostagiLayoutController implements Initializable {
             @Override
             public CheckBoxTreeCell<String> call(TreeView<String> param) {
                 CheckBoxTreeCell<String> cell = (CheckBoxTreeCell<String>) CheckBoxTreeCell.<String>forTreeView().call(param);
+                //create the menu and sub-menus objects
                 ContextMenu addMenu = new ContextMenu();
+                Menu clientMenu = new Menu("Clients", new ImageView(Constants.CLIENT_ICON));
+                Menu contactMenu = new Menu("Contacts", new ImageView(Constants.CONTACT_ICON));
+                //create menu items objects
                 MenuItem refreshMenuItem = new MenuItem(Constants.REFRESH_MENU_ITEM);
                 MenuItem addClientMenuItem = new MenuItem(Constants.ADD_CLIENT_MENU_ITEM);
                 MenuItem addContactMenuItem = new MenuItem(Constants.ADD_CONTACT_MENU_ITEM);
@@ -246,15 +251,19 @@ public class PostagiLayoutController implements Initializable {
                 //add menu items to the menu
                 addMenu.getItems().add(refreshMenuItem);
                 addMenu.getItems().add(separatorMenuItem);
-                addMenu.getItems().add(addClientMenuItem);
-                addMenu.getItems().add(addContactMenuItem);
-                addMenu.getItems().add(separatorMenuItem);
-                addMenu.getItems().add(editClientMenuItem);
-                addMenu.getItems().add(editContactMenuItem);
-                addMenu.getItems().add(separatorMenuItem);
-                addMenu.getItems().add(deleteClientMenuItem);
-                addMenu.getItems().add(deleteContactMenuItem);
-
+                addMenu.getItems().add(clientMenu);
+                addMenu.getItems().add(contactMenu);
+                
+                //add menu items of client to client sub-menu.
+                clientMenu.getItems().add(addClientMenuItem);
+                clientMenu.getItems().add(editClientMenuItem);
+                clientMenu.getItems().add(deleteClientMenuItem);
+                
+                //add menu items of contact to contact sub-menu.
+                contactMenu.getItems().add(addContactMenuItem);
+                contactMenu.getItems().add(editContactMenuItem);
+                contactMenu.getItems().add(deleteContactMenuItem);
+                
                 //assign the event handler to the menu items
                 refreshMenuItem.setOnAction(handler);
                 addClientMenuItem.setOnAction(handler);
