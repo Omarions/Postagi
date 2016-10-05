@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TreeView?>
@@ -99,8 +100,20 @@
             </BorderPane>
          </center>
          <bottom>
-            <HBox alignment="BASELINE_RIGHT" prefHeight="27.0" prefWidth="606.0" BorderPane.alignment="CENTER">
+            <HBox alignment="CENTER_RIGHT" prefHeight="27.0" prefWidth="606.0" spacing="5.0" BorderPane.alignment="CENTER">
                <children>
+                  <HBox fx:id="hbStatusBar" alignment="CENTER_LEFT" prefHeight="20.0" prefWidth="530.0" spacing="5.0" styleClass="statusbar" stylesheets="@../css/style.css" visible="false">
+                     <padding>
+                        <Insets bottom="3.0" left="5.0" right="5.0" top="3.0" />
+                     </padding>
+                     <children>
+                        <Label fx:id="lblStatus" prefHeight="21.0" prefWidth="328.0" text="Label" />
+                        <ProgressBar fx:id="progStatus" prefWidth="200.0" progress="0.0" />
+                     </children>
+                     <opaqueInsets>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </opaqueInsets>
+                  </HBox>
                   <Button mnemonicParsing="false" onAction="#sendHandler" prefHeight="25.0" prefWidth="74.0" styleClass="flat_button" text="Send" />
                </children>
                <opaqueInsets>

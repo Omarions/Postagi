@@ -45,9 +45,11 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBoxTreeItem;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -114,8 +116,12 @@ public class PostagiLayoutController implements Initializable {
     private TreeView tvTo;
     @FXML
     private TextField tfTagFilter;
-
-    private ProgressDialog pd;
+    @FXML
+    private HBox hbStatusBar;
+    @FXML
+    private Label lblStatus;
+    @FXML
+    private ProgressBar progStatus;
 
     private final CheckBoxTreeItem<String> rootNode = new CheckBoxTreeItem<>("Customers", Constants.CUSTOMER_ICON);
     private final List<TreeItem<String>> cbTreeItems = new ArrayList<>();
@@ -394,14 +400,18 @@ public class PostagiLayoutController implements Initializable {
         };
         //close the service on succeed
         service.setOnSucceeded(v -> {
-            pd.close();
+            //hide the statusbar when done.
+            hbStatusBar.setVisible(false);
         });
-        //create the progress dialog and show it.
-        pd = new ProgressDialog(service);
-        pd.setContentText("Sending mails now, please wait...");
-        pd.setHeaderText("Sending Mails...");
-        pd.initOwner(Postagi.mainStage);
-        pd.initModality(Modality.WINDOW_MODAL);
+        //show the status bar when sending mails.
+        hbStatusBar.setVisible(true);
+        
+        //bind the text and progress of status bar with message and progress of service
+        lblStatus.textProperty().unbind();
+        lblStatus.textProperty().bind(service.messageProperty());
+        progStatus.progressProperty().unbind();
+        progStatus.progressProperty().bind(service.progressProperty());
+        
         //start the service.
         service.start();
 
