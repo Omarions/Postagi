@@ -115,7 +115,7 @@ public class cContact {
         return contact;
     }
 
-    public List<Contact> getAll() {
+    public List<Contact> getAll() throws SQLException{
         final String GET_ALL_SQL = "SELECT cont.*, cl.* FROM contact AS cont "
                 + "INNER JOIN client AS cl ON(cont.client_id = cl.id) ";
         List<Contact> contacts = new ArrayList<>();
@@ -159,7 +159,7 @@ public class cContact {
             }
 
         } catch (SQLException ex) {
-            Logger.getLogger(cContact.class.getName()).log(Level.SEVERE, null, ex);
+            throw ex;
         }
 
         return contacts;

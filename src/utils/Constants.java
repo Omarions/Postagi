@@ -20,6 +20,8 @@ public class Constants {
     public static final String ADD_CONTACT_MENU_ITEM = "Add Contact";
     public static final String EDIT_CLIENT_MENU_ITEM = "Edit Client";
     public static final String EDIT_CONTACT_MENU_ITEM = "Edit Contact";
+    public static final String DELETE_CLIENT_MENU_ITEM = "Delete Client";
+    public static final String DELETE_CONTACT_MENU_ITEM = "Delete Contact";
     
     public static final Node CUSTOMER_ICON = new ImageView(
             new Image(Constants.class.getResourceAsStream("/images/customers_32.png")));
@@ -37,6 +39,8 @@ public class Constants {
             = new Image(Constants.class.getResourceAsStream("/images/edit_icon.png"));
     public static final Image ADD_MENU_ITEM_ICON
             = new Image(Constants.class.getResourceAsStream("/images/add_icon.png"));
+    public static final Image DELETE_MENU_ITEM_ICON
+            = new Image(Constants.class.getResourceAsStream("/images/delete_icon.png"));
     public static final Image REFRESH_MENU_ITEM_ICON
             = new Image(Constants.class.getResourceAsStream("/images/arrows_refresh.png"));
 }

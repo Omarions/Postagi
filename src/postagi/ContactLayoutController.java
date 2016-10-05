@@ -8,6 +8,7 @@ package postagi;
 import controller.cClient;
 import controller.cContact;
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import javafx.collections.FXCollections;
@@ -23,6 +24,7 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import model.Client;
 import model.Contact;
+import utils.Utils;
 
 /**
  * FXML Controller class
@@ -68,9 +70,14 @@ public class ContactLayoutController implements Initializable {
         //create the objects of controllers to communicate with DB
         mcContact = new cContact();
         mcClient = new cClient();
-
+        try{
         clients.setAll(mcClient.getAll());
         cbClient.setItems(clients);
+        }catch(SQLException ex){
+            Utils.showExceptionDialog("Error in Database",
+                    "The following exception occurred while retrieving data from database...",
+                    ex.toString());
+        }
     }
 
     /**

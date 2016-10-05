@@ -86,6 +86,7 @@ import model.Contact;
 import org.controlsfx.dialog.ProgressDialog;
 import utils.Constants;
 import utils.DialogType;
+import utils.Utils;
 
 /**
  *
@@ -114,19 +115,22 @@ public class PostagiLayoutController implements Initializable {
     private TextField tfTagFilter;
 
     private ProgressDialog pd;
-    
+
     private final CheckBoxTreeItem<String> rootNode = new CheckBoxTreeItem<>("Customers", Constants.CUSTOMER_ICON);
     private final List<TreeItem<String>> cbTreeItems = new ArrayList<>();
-    
+
     private final ObservableList<Client> clientsList = FXCollections.observableArrayList();
-    private final ObservableList<Contact> contacts = FXCollections.observableArrayList();
+    private final ObservableList<Contact> contactsList = FXCollections.observableArrayList();
     private final List<File> attachments = new ArrayList<>();
-    private BodyPart msgBodyPart = new MimeBodyPart();   
+    private BodyPart msgBodyPart = new MimeBodyPart();
     private cClient cclient;
+    private cContact ccontact;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         cclient = new cClient();
+        ccontact = new cContact();
+        
         fillClientsList();
 
         populateTreeView(clientsList);
@@ -143,6 +147,8 @@ public class PostagiLayoutController implements Initializable {
                 MenuItem addContactMenuItem = new MenuItem(Constants.ADD_CONTACT_MENU_ITEM);
                 MenuItem editClientMenuItem = new MenuItem(Constants.EDIT_CLIENT_MENU_ITEM);
                 MenuItem editContactMenuItem = new MenuItem(Constants.EDIT_CONTACT_MENU_ITEM);
+                MenuItem deleteClientMenuItem = new MenuItem(Constants.DELETE_CLIENT_MENU_ITEM);
+                MenuItem deleteContactMenuItem = new MenuItem(Constants.DELETE_CONTACT_MENU_ITEM);
                 SeparatorMenuItem separatorMenuItem = new SeparatorMenuItem();
 
                 //Add icons to the menu items
@@ -151,6 +157,8 @@ public class PostagiLayoutController implements Initializable {
                 addContactMenuItem.setGraphic(new ImageView(Constants.ADD_MENU_ITEM_ICON));
                 editClientMenuItem.setGraphic(new ImageView(Constants.EDIT_MENU_ITEM_ICON));
                 editContactMenuItem.setGraphic(new ImageView(Constants.EDIT_MENU_ITEM_ICON));
+                deleteClientMenuItem.setGraphic(new ImageView(Constants.DELETE_MENU_ITEM_ICON));
+                deleteContactMenuItem.setGraphic(new ImageView(Constants.DELETE_MENU_ITEM_ICON));
 
                 EventHandler<ActionEvent> handler = (ActionEvent event) -> {
                     String selectedMenuItem = ((MenuItem) event.getSource()).getText();
@@ -173,12 +181,12 @@ public class PostagiLayoutController implements Initializable {
                             break;
                         case Constants.EDIT_CLIENT_MENU_ITEM:
                             fillClientsList();
-                            ChoiceDialog<Client> clientDialog = new ChoiceDialog<>(clientsList.get(0), clientsList);
-                            clientDialog.setTitle("Client Dialog");
-                            clientDialog.setHeaderText("Client to update...");
-                            clientDialog.setContentText("Choose the client to update.");
-                            Optional<Client> result = clientDialog.showAndWait();
-                            result.ifPresent((client) -> {
+                            ChoiceDialog<Client> editClientDialog = new ChoiceDialog<>(clientsList.get(0), clientsList);
+                            editClientDialog.setTitle("Client Dialog");
+                            editClientDialog.setHeaderText("Client to update...");
+                            editClientDialog.setContentText("Choose the client to update.");
+                            Optional<Client> editClientResult = editClientDialog.showAndWait();
+                            editClientResult.ifPresent((client) -> {
                                 if (showDialog("ClientLayout.fxml", DialogType.CLIENT, client, null)) {
                                     fillClientsList();
                                     populateTreeView(clientsList);
@@ -186,16 +194,48 @@ public class PostagiLayoutController implements Initializable {
                             });
                             break;
                         case Constants.EDIT_CONTACT_MENU_ITEM:
-                            List<Contact> contactsList = new cContact().getAll();
-                            ChoiceDialog<Contact> contactDialog = new ChoiceDialog<>(contactsList.get(0), contactsList);
-                            contactDialog.setTitle("Contact Dialog");
-                            contactDialog.setHeaderText("Contact to update...");
-                            contactDialog.setContentText("Choose the contact to update.");
-                            Optional<Contact> contactResult = contactDialog.showAndWait();
-                            contactResult.ifPresent((contact) -> {
+                            fillContactsList();
+                            ChoiceDialog<Contact> editContactDialog = new ChoiceDialog<>(contactsList.get(0), contactsList);
+                            editContactDialog.setTitle("Contact Dialog");
+                            editContactDialog.setHeaderText("Contact to update...");
+                            editContactDialog.setContentText("Choose the contact to update.");
+                            Optional<Contact> editContactResult = editContactDialog.showAndWait();
+                            editContactResult.ifPresent((contact) -> {
                                 if (showDialog("ContactLayout.fxml", DialogType.CONTACT, null, contact)) {
                                     fillClientsList();
                                     populateTreeView(clientsList);
+                                }
+                            });
+                            break;
+                        case Constants.DELETE_CLIENT_MENU_ITEM:
+                            fillClientsList();
+                            ChoiceDialog<Client> deleteClientDialog = new ChoiceDialog<>(clientsList.get(0), clientsList);
+                            deleteClientDialog.setTitle("Client Dialog");
+                            deleteClientDialog.setHeaderText("Client to update...");
+                            deleteClientDialog.setContentText("Choose the client to remove.");
+                            Optional<Client> deleteClientResult = deleteClientDialog.showAndWait();
+                            deleteClientResult.ifPresent((client) -> {
+                                if (cclient.delete(client.getId()) == 1) {
+                                    fillClientsList();
+                                    populateTreeView(clientsList);
+                                } else {
+                                    Utils.showErrorDialog("Remove Client Failure...", "There is no client with that ID in database...");
+                                }
+                            });
+                            break;
+                        case Constants.DELETE_CONTACT_MENU_ITEM:
+                            fillContactsList();
+                            ChoiceDialog<Contact> deleteContactDialog = new ChoiceDialog<>(contactsList.get(0), contactsList);
+                            deleteContactDialog.setTitle("Contact Dialog");
+                            deleteContactDialog.setHeaderText("Contact to update...");
+                            deleteContactDialog.setContentText("Choose the contact to update.");
+                            Optional<Contact> deleteContactResult = deleteContactDialog.showAndWait();
+                            deleteContactResult.ifPresent((contact) -> {
+                                if (ccontact.delete(contact.getId()) == 1) {
+                                    fillClientsList();
+                                    populateTreeView(clientsList);
+                                } else {
+                                    Utils.showErrorDialog("Remove Contact Failure...", "There is no contact with that ID in database...");
                                 }
                             });
                             break;
@@ -204,9 +244,6 @@ public class PostagiLayoutController implements Initializable {
                 };
 
                 //add menu items to the menu
-                //addMenu.getItems().addAll(refreshMenuItem, separatorMenuItem,
-                //addClientMenuItem, addContactMenuItem, separatorMenuItem,
-                //editClientMenuItem, editContactMenuItem);
                 addMenu.getItems().add(refreshMenuItem);
                 addMenu.getItems().add(separatorMenuItem);
                 addMenu.getItems().add(addClientMenuItem);
@@ -214,13 +251,19 @@ public class PostagiLayoutController implements Initializable {
                 addMenu.getItems().add(separatorMenuItem);
                 addMenu.getItems().add(editClientMenuItem);
                 addMenu.getItems().add(editContactMenuItem);
+                addMenu.getItems().add(separatorMenuItem);
+                addMenu.getItems().add(deleteClientMenuItem);
+                addMenu.getItems().add(deleteContactMenuItem);
 
-                //assign the event handler for menu items
+                //assign the event handler to the menu items
                 refreshMenuItem.setOnAction(handler);
                 addClientMenuItem.setOnAction(handler);
                 addContactMenuItem.setOnAction(handler);
                 editClientMenuItem.setOnAction(handler);
                 editContactMenuItem.setOnAction(handler);
+                deleteClientMenuItem.setOnAction(handler);
+                deleteContactMenuItem.setOnAction(handler);
+                
                 //add the context menu to the cell
                 cell.setContextMenu(addMenu);
 
@@ -318,6 +361,7 @@ public class PostagiLayoutController implements Initializable {
             protected Task<Void> createTask() {
                 return new Task<Void>() {
                     int mailsSize = getSelectedMails().size();
+
                     @Override
                     protected Void call() throws Exception {
                         //update the progress dialog message
@@ -400,10 +444,10 @@ public class PostagiLayoutController implements Initializable {
                         cbTreeItems.add(mailLeaf);
                     });
 
-            contacts.clear();
-            contacts.addAll(cclient.getContacts(client.getId()));
+            contactsList.clear();
+            contactsList.addAll(cclient.getContacts(client.getId()));
 
-            contacts.stream().forEach((contact) -> {
+            contactsList.stream().forEach((contact) -> {
                 List<String> contactMails = extractMails(contact.getMails());
                 CheckBoxTreeItem<String> contactNode
                         = new CheckBoxTreeItem<>(contact.getName(), new ImageView(Constants.CONTACT_ICON));
@@ -514,7 +558,6 @@ public class PostagiLayoutController implements Initializable {
 
         ImageView deleteIcon = new ImageView(Constants.INACTIVE_DELETE_ICON);
         deleteIcon.setId("deleteIcon");
-        System.out.println(deleteIcon.getId());
 
         deleteIcon.setOnMouseClicked((event) -> {
             attachments.remove(selectedFile);
@@ -531,7 +574,7 @@ public class PostagiLayoutController implements Initializable {
                     desktop.open(selectedFile);
                 } catch (IOException ex) {
                     Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-                    showErrorDialog("Open File Error...", "There is no supported application to open the file!");            
+                    Utils.showErrorDialog("Open File Error...", "There is no supported application to open the file!");
                 }
             }
         });
@@ -596,7 +639,7 @@ public class PostagiLayoutController implements Initializable {
                 //InternetAddress[] addressesTo = prepareMailsList(getSelectedMails());
                 //check for null addresses array.
                 if (addressesCC == null) {
-                    showErrorDialog("Message Error...", "Error in creating CC address)!");                         
+                    Utils.showErrorDialog("Message Error...", "Error in creating CC address)!");
                     return false;
                 }
 
@@ -632,7 +675,7 @@ public class PostagiLayoutController implements Initializable {
                             multiPart.addBodyPart(msgBodyPart);
                         } catch (MessagingException ex) {
                             Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-                            showExceptionDialog("Message Error...","Exception happen while creating the attachment!", ex.toString());
+                            Utils.showExceptionDialog("Message Error...", "Exception happen while creating the attachment!", ex.toString());
                         }
                     });
 
@@ -645,24 +688,13 @@ public class PostagiLayoutController implements Initializable {
             }
         } catch (MessagingException ex) {
             Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-            showExceptionDialog("Message Failure...", "Exception happen while send message!", ex.toString());
+            Utils.showExceptionDialog("Message Failure...", "Exception happen while send message!", ex.toString());
             return false;
         }
         return false;
     }
 
-    /**
-     * Display error dialog.
-     *
-     * @param header of the dialog
-     * @param msg of the dialog
-     */
-    private void showErrorDialog(String header, String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR,
-                msg, ButtonType.OK);
-        alert.setHeaderText(header);
-        alert.showAndWait();
-    }
+    
 
     /**
      * Fill the list of clients and show error dialog if happens while
@@ -672,14 +704,21 @@ public class PostagiLayoutController implements Initializable {
         try {
             clientsList.setAll(cclient.getAll());
         } catch (SQLException ex) {
-            showErrorDialog("Database Error...", ex.toString());
+            Utils.showErrorDialog("Database Error...", ex.toString());
+        }
+    }
+    
+    /**
+     * Fill the list of clients and show error dialog if happens while
+     * retrieving data from DB
+     */
+    private void fillContactsList() {
+        try {
+            contactsList.setAll(ccontact.getAll());
+        } catch (SQLException ex) {
+            Utils.showErrorDialog("Database Error...", ex.toString());
         }
     }
 
-    private void showExceptionDialog(String header, String msg, String exception){
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setHeaderText(header);
-        alert.setContentText(msg);
-        alert.getDialogPane().setContent(new TextArea(exception));
-    }
+    
 }
