@@ -89,7 +89,7 @@ public class cClient {
         return client;
     }
 
-    public List<Client> getAll() {
+    public List<Client> getAll() throws SQLException{
         final String GET_ALL_SQL = "SELECT * FROM client";
         List<Client> clients = new ArrayList<>();
 
@@ -120,7 +120,7 @@ public class cClient {
             }
 
         } catch (SQLException ex) {
-            Logger.getLogger(cClient.class.getName()).log(Level.SEVERE, null, ex);
+            throw ex;
         }
 
         return clients;

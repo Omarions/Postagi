@@ -11,6 +11,10 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.time.LocalTime;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -22,6 +26,9 @@ import java.util.ResourceBundle;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -59,6 +66,7 @@ import javafx.util.Callback;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
+import javax.mail.Address;
 import javax.mail.Authenticator;
 import javax.mail.BodyPart;
 import javax.mail.Message;
@@ -136,14 +144,16 @@ public class PostagiLayoutController implements Initializable {
     private final ObservableList<Contact> contacts = FXCollections.observableArrayList();
     private final List<TreeItem<String>> cbTreeItems = new ArrayList<>();
     private final List<File> attachments = new ArrayList<>();
-    BodyPart msgBodyPart = new MimeBodyPart();
+    private BodyPart msgBodyPart = new MimeBodyPart();
+    private ProgressDialog pd;
     private cClient cclient;
-    boolean clientClicked = false;
+    private boolean clientClicked = false;
+    private int counter;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         cclient = new cClient();
-        clientsList.addAll(cclient.getAll());
+        fillClientsList();
 
         populateTreeView(clientsList);
         //set context menu (according to its type - client or contact -) for the cells.
@@ -172,23 +182,23 @@ public class PostagiLayoutController implements Initializable {
                     String selectedMenuItem = ((MenuItem) event.getSource()).getText();
                     switch (selectedMenuItem) {
                         case REFRESH_MENU_ITEM:
-                            clientsList.setAll(cclient.getAll());
+                            fillClientsList();
                             populateTreeView(clientsList);
                             break;
                         case ADD_CLIENT_MENU_ITEM:
                             if (showDialog("ClientLayout.fxml", DialogType.CLIENT, null, null)) {
-                                clientsList.setAll(cclient.getAll());
+                                fillClientsList();
                                 populateTreeView(clientsList);
                             }
                             break;
                         case ADD_CONTACT_MENU_ITEM:
                             if (showDialog("ContactLayout.fxml", DialogType.CONTACT, null, null)) {
-                                clientsList.setAll(cclient.getAll());
+                                fillClientsList();
                                 populateTreeView(clientsList);
                             }
                             break;
                         case EDIT_CLIENT_MENU_ITEM:
-                            clientsList.setAll(cclient.getAll());
+                            fillClientsList();
                             ChoiceDialog<Client> clientDialog = new ChoiceDialog<>(clientsList.get(0), clientsList);
                             clientDialog.setTitle("Client Dialog");
                             clientDialog.setHeaderText("Client to update...");
@@ -196,7 +206,7 @@ public class PostagiLayoutController implements Initializable {
                             Optional<Client> result = clientDialog.showAndWait();
                             result.ifPresent((client) -> {
                                 if (showDialog("ClientLayout.fxml", DialogType.CLIENT, client, null)) {
-                                    clientsList.setAll(cclient.getAll());
+                                    fillClientsList();
                                     populateTreeView(clientsList);
                                 }
                             });
@@ -210,7 +220,7 @@ public class PostagiLayoutController implements Initializable {
                             Optional<Contact> contactResult = contactDialog.showAndWait();
                             contactResult.ifPresent((contact) -> {
                                 if (showDialog("ContactLayout.fxml", DialogType.CONTACT, null, contact)) {
-                                    clientsList.setAll(cclient.getAll());
+                                    fillClientsList();
                                     populateTreeView(clientsList);
                                 }
                             });
@@ -328,25 +338,45 @@ public class PostagiLayoutController implements Initializable {
      */
     @FXML
     public void sendHandler(ActionEvent event) {
-        Task service = new Task() {
+        //create service to send mails in background and show progress dialog for the user
+        javafx.concurrent.Service<Void> service = new javafx.concurrent.Service<Void>() {
             @Override
-            protected Object call() throws Exception {
-                updateMessage("Sending Mail . . .");
-                updateProgress(0, getSelectedMails().size());
-                for (int i = 0; i < getSelectedMails().size(); i++) {
-                    sendMail();
-                    updateProgress(i + 1, getSelectedMails().size());
-                    updateMessage("send " + (i + 1) + " mail.");
-                }
-                updateMessage("Send all.");
-                return null;
+            protected Task<Void> createTask() {
+                return new Task<Void>() {
+                    int mailsSize = getSelectedMails().size();
+                    @Override
+                    protected Void call() throws Exception {
+                        //update the progress dialog message
+                        updateMessage("Sending mails . . .");
+                        //update the progress of progress dialog from 0 to size of mails
+                        updateProgress(0, mailsSize);
+                        //loop on mails and send them one by one and update the progress dialog.
+                        //to show how many mail is sent.
+                        for (int i = 0; i < mailsSize; i++) {
+                            if (sendMail(getSelectedMails().get(i))) {
+                                updateProgress(i + 1, mailsSize);
+                                updateMessage("send " + (i + 1) + "/" + mailsSize + " mails!");
+                            }
+                        }
+                        updateMessage("Send all.");
+                        Thread.sleep(2000);
+                        return null;
+                    }
+                };
             }
         };
-        ProgressDialog pd = new ProgressDialog(service);
-        pd.setContentText("The app is sending mails, please be patient...");
+        //close the service on succeed
+        service.setOnSucceeded(v -> {
+            pd.close();
+        });
+        //create the progress dialog and show it.
+        pd = new ProgressDialog(service);
+        pd.setContentText("Sending mails now, please wait...");
         pd.setHeaderText("Sending Mails...");
-        pd.setHeaderText("Send Mails");
-        pd.showAndWait();
+        pd.initOwner(Postagi.mainStage);
+        pd.initModality(Modality.WINDOW_MODAL);
+        //start the service.
+        service.start();
 
     }
 
@@ -574,25 +604,9 @@ public class PostagiLayoutController implements Initializable {
     }
 
     /**
-     * Prepare Internet addresses array of To mails
-     *
-     * @param toList the list of mails
-     * @return array of InternetAddress
+     * Send mail code using JavaMail API
      */
-    private InternetAddress[] prepareTO(List<String> toList) {
-        InternetAddress[] addressesTo = new InternetAddress[toList.size()];
-        for (int i = 0; i < toList.size(); i++) {
-            try {
-                addressesTo[i] = new InternetAddress(getSelectedMails().get(i));
-            } catch (AddressException ex) {
-                Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-                return null;
-            }
-        }
-        return addressesTo;
-    }
-
-    private void sendMail() {
+    private boolean sendMail(String to) {
         Properties props = new Properties();
         props.put("mail.smtp.host", HOST);
         props.put("mail.smtp.auth", true);
@@ -610,14 +624,14 @@ public class PostagiLayoutController implements Initializable {
                 InternetAddress[] addressesCC = prepareMailsList(parts.get().get("cc"));
 
                 //create the Address array for the reciepents addresses, and fill it
-                InternetAddress[] addressesTo = prepareMailsList(getSelectedMails());
+                //InternetAddress[] addressesTo = prepareMailsList(getSelectedMails());
                 //check for null addresses array.
-                if (addressesTo == null || addressesCC == null) {
+                if (addressesCC == null) {
                     Alert alert = new Alert(Alert.AlertType.ERROR,
                             "Error in creaating message parts (To address or CC address)!", ButtonType.OK);
                     alert.setHeaderText("Message Failure...");
                     alert.showAndWait();
-                    return;
+                    return false;
                 }
 
                 //Create the session for sending the message.
@@ -632,7 +646,7 @@ public class PostagiLayoutController implements Initializable {
                 MimeMessage message = new MimeMessage(session);
                 //set the parts of the message
                 message.setFrom(new InternetAddress(FROM));
-                message.addRecipients(Message.RecipientType.TO, addressesTo);
+                message.addRecipients(Message.RecipientType.TO, to);
                 message.addRecipients(Message.RecipientType.CC, addressesCC);
                 message.setSubject(SUBJECT);
                 //Set the body of the message
@@ -665,19 +679,39 @@ public class PostagiLayoutController implements Initializable {
                 message.setContent(multiPart);
                 //send the message
                 Transport.send(message);
-                Alert alert = new Alert(Alert.AlertType.INFORMATION,
-                        "Message Sent Successfully!", ButtonType.OK);
-                alert.setHeaderText("Message Sent...");
-                alert.showAndWait();
+                return true;
             }
         } catch (MessagingException ex) {
             Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-            Alert alert = new Alert(Alert.AlertType.ERROR,
-                    ex.toString(), ButtonType.OK);
-            alert.setHeaderText("Message Failure...");
-            alert.showAndWait();
+            showErrorDialog("Message Failure...", ex.toString());
+            return false;
         }
+        return false;
+    }
 
+    /**
+     * Display error dialog.
+     *
+     * @param header of the dialog
+     * @param msg of the dialog
+     */
+    private void showErrorDialog(String header, String msg) {
+        Alert alert = new Alert(Alert.AlertType.ERROR,
+                msg, ButtonType.OK);
+        alert.setHeaderText(header);
+        alert.showAndWait();
+    }
+
+    /**
+     * Fill the list of clients and show error dialog if happens while
+     * retrieving data from DB
+     */
+    private void fillClientsList() {
+        try {
+            clientsList.setAll(cclient.getAll());
+        } catch (SQLException ex) {
+            showErrorDialog("Database Error...", ex.toString());
+        }
     }
 
 }

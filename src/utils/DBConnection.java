@@ -7,9 +7,6 @@ package utils;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.sql.DataSource;
 
 /**
  * @author Omar
@@ -29,7 +26,7 @@ public class DBConnection {
             return conn;
  
         }catch(SQLException ex){
-            throw new SQLException("Error in connection creation to DB...");
+            throw new SQLException("Error in creating a connection to DB...");
         } 
            
     }

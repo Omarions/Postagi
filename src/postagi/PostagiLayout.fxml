@@ -57,13 +57,13 @@
                         <Label text="Subject" GridPane.rowIndex="2" />
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="3.0" GridPane.columnIndex="1">
                            <children>
-                              <TextField fx:id="tfFrom" prefHeight="31.0" prefWidth="211.0" promptText="Mail to send from" style="-fx-background-radius: 5;" />
+                              <TextField fx:id="tfFrom" prefHeight="31.0" prefWidth="211.0" promptText="Mail to send from" style="-fx-background-radius: 5;" text="omar@ngc-eg.com" />
                               <Label text="Password" />
-                              <PasswordField fx:id="pfPassword" prefHeight="31.0" prefWidth="84.0" promptText="Password of account" style="-fx-background-radius: 5;" />
+                              <PasswordField fx:id="pfPassword" prefHeight="31.0" prefWidth="84.0" promptText="Password of account" style="-fx-background-radius: 5;" text="mendl970552" />
                            </children>
                         </HBox>
-                        <TextField fx:id="tfCC" promptText="Enter CC mails if required" style="-fx-background-radius: 5;" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                        <TextField fx:id="tfTitle" promptText="Subject of Mail" style="-fx-background-radius: 5;" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <TextField fx:id="tfCC" promptText="Enter CC mails if required" style="-fx-background-radius: 5;" text="omar@ngc-eg.com" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <TextField fx:id="tfTitle" promptText="Subject of Mail" style="-fx-background-radius: 5;" text="Test mail" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                         <Label text="Attach" GridPane.rowIndex="3" />
                         <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="15.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
                            <children>
@@ -92,7 +92,7 @@
                               <Insets left="5.0" />
                            </padding>
                         </Label>
-                        <TextArea fx:id="taContents" prefHeight="235.0" prefWidth="417.0" promptText="Message Content" style="-fx-border-radius: 20;" />
+                        <TextArea fx:id="taContents" prefHeight="235.0" prefWidth="417.0" promptText="Message Content" style="-fx-border-radius: 20;" text="Test mail, to be removed" />
                      </children>
                   </VBox>
                </center>
