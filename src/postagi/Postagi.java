@@ -11,6 +11,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 /**
  *
@@ -22,10 +23,23 @@ public class Postagi extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         mainStage = stage;
-        Parent root = FXMLLoader.load(getClass().getResource("PostagiLayout.fxml"));
-        Scene scene = new Scene(root);
+        Parent root = FXMLLoader.load(getClass().getResource("/view/PostagiLayout.fxml"));
+        Scene scene = null;
+        
+        String osName = System.getProperty("os.name");
+        if(osName != null && osName.startsWith("Windows")){
+            scene = (new WindowsHack()).getShadowScene(root);
+            stage.initStyle(StageStyle.TRANSPARENT);
+        }else{
+            scene = new Scene(root);
+            stage.initStyle(StageStyle.UNDECORATED);
+        }
         scene.getStylesheets().add(getClass().getResource("/css/style.css").toExternalForm());
+        
+        stage.setTitle("Postagi");
         stage.setScene(scene);
+        stage.setMinHeight(500.0d);
+        stage.setMinWidth(620.0d);
         stage.show();
     }
 

@@ -12,9 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
-import java.time.Duration;
-import java.time.LocalTime;
-import java.time.Period;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,9 +23,6 @@ import java.util.ResourceBundle;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -57,19 +51,22 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.CheckBoxTreeCell;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.Window;
 import javafx.util.Callback;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
-import javax.mail.Address;
 import javax.mail.Authenticator;
 import javax.mail.BodyPart;
 import javax.mail.Message;
@@ -83,10 +80,8 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-import javax.xml.ws.Service;
 import model.Client;
 import model.Contact;
-import org.controlsfx.dialog.ProgressDialog;
 import postagi.Postagi;
 import utils.Constants;
 import utils.DialogType;
@@ -98,6 +93,8 @@ import utils.Utils;
  */
 public class PostagiLayoutController implements Initializable {
 
+    @FXML
+    private VBox vbox;
     @FXML
     private TextField tfFrom;
     @FXML
@@ -134,11 +131,17 @@ public class PostagiLayoutController implements Initializable {
     private cClient cclient;
     private cContact ccontact;
 
+    //variables for dragging the window
+    private double startMoveX = -1, startMoveY = -1;
+    private Boolean dragging = false;
+    private Rectangle moveTrackingRect;
+    private Popup moveTrackingPopup;
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         cclient = new cClient();
         ccontact = new cContact();
-        
+
         fillClientsList();
 
         populateTreeView(clientsList);
@@ -180,13 +183,13 @@ public class PostagiLayoutController implements Initializable {
                             populateTreeView(clientsList);
                             break;
                         case Constants.ADD_CLIENT_MENU_ITEM:
-                            if (showDialog("ClientLayout.fxml", DialogType.CLIENT, null, null)) {
+                            if (showDialog("/view/ClientLayout.fxml", DialogType.CLIENT, null, null)) {
                                 fillClientsList();
                                 populateTreeView(clientsList);
                             }
                             break;
                         case Constants.ADD_CONTACT_MENU_ITEM:
-                            if (showDialog("ContactLayout.fxml", DialogType.CONTACT, null, null)) {
+                            if (showDialog("/view/ContactLayout.fxml", DialogType.CONTACT, null, null)) {
                                 fillClientsList();
                                 populateTreeView(clientsList);
                             }
@@ -199,7 +202,7 @@ public class PostagiLayoutController implements Initializable {
                             editClientDialog.setContentText("Choose the client to update.");
                             Optional<Client> editClientResult = editClientDialog.showAndWait();
                             editClientResult.ifPresent((client) -> {
-                                if (showDialog("ClientLayout.fxml", DialogType.CLIENT, client, null)) {
+                                if (showDialog("/view/ClientLayout.fxml", DialogType.CLIENT, client, null)) {
                                     fillClientsList();
                                     populateTreeView(clientsList);
                                 }
@@ -213,7 +216,7 @@ public class PostagiLayoutController implements Initializable {
                             editContactDialog.setContentText("Choose the contact to update.");
                             Optional<Contact> editContactResult = editContactDialog.showAndWait();
                             editContactResult.ifPresent((contact) -> {
-                                if (showDialog("ContactLayout.fxml", DialogType.CONTACT, null, contact)) {
+                                if (showDialog("view/ContactLayout.fxml", DialogType.CONTACT, null, contact)) {
                                     fillClientsList();
                                     populateTreeView(clientsList);
                                 }
@@ -260,17 +263,17 @@ public class PostagiLayoutController implements Initializable {
                 addMenu.getItems().add(separatorMenuItem);
                 addMenu.getItems().add(clientMenu);
                 addMenu.getItems().add(contactMenu);
-                
+
                 //add menu items of client to client sub-menu.
                 clientMenu.getItems().add(addClientMenuItem);
                 clientMenu.getItems().add(editClientMenuItem);
                 clientMenu.getItems().add(deleteClientMenuItem);
-                
+
                 //add menu items of contact to contact sub-menu.
                 contactMenu.getItems().add(addContactMenuItem);
                 contactMenu.getItems().add(editContactMenuItem);
                 contactMenu.getItems().add(deleteContactMenuItem);
-                
+
                 //assign the event handler to the menu items
                 refreshMenuItem.setOnAction(handler);
                 addClientMenuItem.setOnAction(handler);
@@ -279,7 +282,7 @@ public class PostagiLayoutController implements Initializable {
                 editContactMenuItem.setOnAction(handler);
                 deleteClientMenuItem.setOnAction(handler);
                 deleteContactMenuItem.setOnAction(handler);
-                
+
                 //add the context menu to the cell
                 cell.setContextMenu(addMenu);
 
@@ -302,13 +305,14 @@ public class PostagiLayoutController implements Initializable {
                     loader.setLocation(Postagi.class.getResource(url));
                     AnchorPane page = (AnchorPane) loader.load();
 
+                    Scene scene = new Scene(page);
+                    scene.setFill(null);
+
                     dialogeStage.initModality(Modality.WINDOW_MODAL);
                     dialogeStage.initOwner(Postagi.mainStage);
-                    dialogeStage.initStyle(StageStyle.UNDECORATED);
+                    dialogeStage.initStyle(StageStyle.TRANSPARENT);
                     dialogeStage.setY(Postagi.mainStage.getY() + 40);
                     dialogeStage.setX(Postagi.mainStage.getX() + Postagi.mainStage.getWidth());
-
-                    Scene scene = new Scene(page);
                     dialogeStage.setScene(scene);
 
                     switch (flag) {
@@ -345,6 +349,78 @@ public class PostagiLayoutController implements Initializable {
                 return false;
             }
         });
+    }
+
+    @FXML
+    public void closeHandler(MouseEvent event) {
+        ((Label) event.getSource()).getScene().getWindow().hide();
+    }
+
+    @FXML
+    public void minimizeHandler(MouseEvent event) {
+        Stage stage = (Stage) ((Label) event.getSource()).getScene().getWindow();
+
+        stage.setIconified(true);
+    }
+
+    /**
+     * Event handler for start dragging event.
+     *
+     * @param evt the mouse event of dragging detected
+     */
+    @FXML
+    public void startMoveWindow(MouseEvent evt) {
+        startMoveX = evt.getScreenX();
+        startMoveY = evt.getScreenY();
+        dragging = true;
+
+        moveTrackingRect = new Rectangle();
+        moveTrackingRect.setWidth(vbox.getWidth());
+        moveTrackingRect.setHeight(vbox.getHeight());
+        moveTrackingRect.getStyleClass().add("tracking-rect");
+
+        moveTrackingPopup = new Popup();
+        moveTrackingPopup.getContent().add(moveTrackingRect);
+        moveTrackingPopup.show(vbox.getScene().getWindow());
+        moveTrackingPopup.setOnHidden((e) -> resetMoveOperations());
+    }
+
+    @FXML
+    public void moveWindow(MouseEvent evt) {
+        if (dragging) {
+            double endMoveX = evt.getScreenX();
+            double endMoveY = evt.getScreenY();
+
+            Window w = vbox.getScene().getWindow();
+
+            double stageX = w.getX();
+            double stageY = w.getY();
+
+            moveTrackingPopup.setX(stageX + (endMoveX - startMoveX));
+            moveTrackingPopup.setY(stageY + (endMoveY - startMoveY));
+        }
+    }
+
+    @FXML
+    public void endMoveWindow(MouseEvent evt) {
+        if (dragging) {
+            double endMoveX = evt.getScreenX();
+            double endMoveY = evt.getScreenY();
+
+            Window w = vbox.getScene().getWindow();
+
+            double stageX = w.getX();
+            double stageY = w.getY();
+
+            w.setX(stageX + (endMoveX - startMoveX));
+            w.setY(stageY + (endMoveY - startMoveY));
+
+            if (moveTrackingPopup != null) {
+                moveTrackingPopup.hide();
+                moveTrackingPopup = null;
+            }
+        }
+        resetMoveOperations();
     }
 
     /**
@@ -406,13 +482,13 @@ public class PostagiLayoutController implements Initializable {
         });
         //show the status bar when sending mails.
         hbStatusBar.setVisible(true);
-        
+
         //bind the text and progress of status bar with message and progress of service
         lblStatus.textProperty().unbind();
         lblStatus.textProperty().bind(service.messageProperty());
         progStatus.progressProperty().unbind();
         progStatus.progressProperty().bind(service.progressProperty());
-        
+
         //start the service.
         service.start();
 
@@ -714,8 +790,6 @@ public class PostagiLayoutController implements Initializable {
         return false;
     }
 
-    
-
     /**
      * Fill the list of clients and show error dialog if happens while
      * retrieving data from DB
@@ -727,7 +801,7 @@ public class PostagiLayoutController implements Initializable {
             Utils.showErrorDialog("Database Error...", ex.toString());
         }
     }
-    
+
     /**
      * Fill the list of clients and show error dialog if happens while
      * retrieving data from DB
@@ -740,5 +814,11 @@ public class PostagiLayoutController implements Initializable {
         }
     }
 
-    
+    private void resetMoveOperations() {
+        startMoveX = 0;
+        startMoveY = 0;
+        dragging = false;
+        moveTrackingRect = null;
+    }
+
 }
