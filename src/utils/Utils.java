@@ -7,6 +7,7 @@ package utils;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Menu;
 import javafx.scene.control.TextArea;
 
 /**
@@ -39,5 +40,11 @@ public class Utils {
         alert.setHeaderText(header);
         alert.setContentText(msg);
         alert.getDialogPane().setContent(new TextArea(exception));
+    }
+    
+    public static Menu getToolsMenu(){
+        Menu menu = new Menu();
+        
+        return menu;
     }
 }

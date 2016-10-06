@@ -23,6 +23,7 @@ import java.util.ResourceBundle;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -175,89 +176,6 @@ public class PostagiLayoutController implements Initializable {
                 deleteClientMenuItem.setGraphic(new ImageView(Constants.DELETE_MENU_ITEM_ICON));
                 deleteContactMenuItem.setGraphic(new ImageView(Constants.DELETE_MENU_ITEM_ICON));
 
-                EventHandler<ActionEvent> handler = (ActionEvent event) -> {
-                    String selectedMenuItem = ((MenuItem) event.getSource()).getText();
-                    switch (selectedMenuItem) {
-                        case Constants.REFRESH_MENU_ITEM:
-                            fillClientsList();
-                            populateTreeView(clientsList);
-                            break;
-                        case Constants.ADD_CLIENT_MENU_ITEM:
-                            if (showDialog("/view/ClientLayout.fxml", DialogType.CLIENT, null, null)) {
-                                fillClientsList();
-                                populateTreeView(clientsList);
-                            }
-                            break;
-                        case Constants.ADD_CONTACT_MENU_ITEM:
-                            if (showDialog("/view/ContactLayout.fxml", DialogType.CONTACT, null, null)) {
-                                fillClientsList();
-                                populateTreeView(clientsList);
-                            }
-                            break;
-                        case Constants.EDIT_CLIENT_MENU_ITEM:
-                            fillClientsList();
-                            ChoiceDialog<Client> editClientDialog = new ChoiceDialog<>(clientsList.get(0), clientsList);
-                            editClientDialog.setTitle("Client Dialog");
-                            editClientDialog.setHeaderText("Client to update...");
-                            editClientDialog.setContentText("Choose the client to update.");
-                            Optional<Client> editClientResult = editClientDialog.showAndWait();
-                            editClientResult.ifPresent((client) -> {
-                                if (showDialog("/view/ClientLayout.fxml", DialogType.CLIENT, client, null)) {
-                                    fillClientsList();
-                                    populateTreeView(clientsList);
-                                }
-                            });
-                            break;
-                        case Constants.EDIT_CONTACT_MENU_ITEM:
-                            fillContactsList();
-                            ChoiceDialog<Contact> editContactDialog = new ChoiceDialog<>(contactsList.get(0), contactsList);
-                            editContactDialog.setTitle("Contact Dialog");
-                            editContactDialog.setHeaderText("Contact to update...");
-                            editContactDialog.setContentText("Choose the contact to update.");
-                            Optional<Contact> editContactResult = editContactDialog.showAndWait();
-                            editContactResult.ifPresent((contact) -> {
-                                if (showDialog("view/ContactLayout.fxml", DialogType.CONTACT, null, contact)) {
-                                    fillClientsList();
-                                    populateTreeView(clientsList);
-                                }
-                            });
-                            break;
-                        case Constants.DELETE_CLIENT_MENU_ITEM:
-                            fillClientsList();
-                            ChoiceDialog<Client> deleteClientDialog = new ChoiceDialog<>(clientsList.get(0), clientsList);
-                            deleteClientDialog.setTitle("Client Dialog");
-                            deleteClientDialog.setHeaderText("Client to update...");
-                            deleteClientDialog.setContentText("Choose the client to remove.");
-                            Optional<Client> deleteClientResult = deleteClientDialog.showAndWait();
-                            deleteClientResult.ifPresent((client) -> {
-                                if (cclient.delete(client.getId()) == 1) {
-                                    fillClientsList();
-                                    populateTreeView(clientsList);
-                                } else {
-                                    Utils.showErrorDialog("Remove Client Failure...", "There is no client with that ID in database...");
-                                }
-                            });
-                            break;
-                        case Constants.DELETE_CONTACT_MENU_ITEM:
-                            fillContactsList();
-                            ChoiceDialog<Contact> deleteContactDialog = new ChoiceDialog<>(contactsList.get(0), contactsList);
-                            deleteContactDialog.setTitle("Contact Dialog");
-                            deleteContactDialog.setHeaderText("Contact to update...");
-                            deleteContactDialog.setContentText("Choose the contact to update.");
-                            Optional<Contact> deleteContactResult = deleteContactDialog.showAndWait();
-                            deleteContactResult.ifPresent((contact) -> {
-                                if (ccontact.delete(contact.getId()) == 1) {
-                                    fillClientsList();
-                                    populateTreeView(clientsList);
-                                } else {
-                                    Utils.showErrorDialog("Remove Contact Failure...", "There is no contact with that ID in database...");
-                                }
-                            });
-                            break;
-                    }
-
-                };
-
                 //add menu items to the menu
                 addMenu.getItems().add(refreshMenuItem);
                 addMenu.getItems().add(separatorMenuItem);
@@ -274,6 +192,10 @@ public class PostagiLayoutController implements Initializable {
                 contactMenu.getItems().add(editContactMenuItem);
                 contactMenu.getItems().add(deleteContactMenuItem);
 
+                //get the handler for events of menus
+                EventHandler<ActionEvent> handler = (ActionEvent event) -> {
+                    menusEventHandler(event);
+                };
                 //assign the event handler to the menu items
                 refreshMenuItem.setOnAction(handler);
                 addClientMenuItem.setOnAction(handler);
@@ -289,78 +211,131 @@ public class PostagiLayoutController implements Initializable {
                 return cell;
             }
 
-            /**
-             * Show the dialog according to the type (client or contact)
-             *
-             * @param url the resource of fxml file that should be loaded
-             * @param flag the type of dialog (dialog for client or for contact)
-             * @return true when either button of save (save and quit or save
-             * and add new ) is clicked, otherwise returns false.
-             */
-            private boolean showDialog(String url, DialogType flag, Client updateClient, Contact updateContact) {
-                FXMLLoader loader = new FXMLLoader();
-                Stage dialogeStage = new Stage();
-
-                try {
-                    loader.setLocation(Postagi.class.getResource(url));
-                    AnchorPane page = (AnchorPane) loader.load();
-
-                    Scene scene = new Scene(page);
-                    scene.setFill(null);
-
-                    dialogeStage.initModality(Modality.WINDOW_MODAL);
-                    dialogeStage.initOwner(Postagi.mainStage);
-                    dialogeStage.initStyle(StageStyle.TRANSPARENT);
-                    dialogeStage.setY(Postagi.mainStage.getY() + 40);
-                    dialogeStage.setX(Postagi.mainStage.getX() + Postagi.mainStage.getWidth());
-                    dialogeStage.setScene(scene);
-
-                    switch (flag) {
-                        case CLIENT:
-                            // create the controller of client layout controller
-                            ClientLayoutController clientController = loader.getController();
-                            clientController.setDialogStage(dialogeStage);
-                            if (updateClient != null) {
-                                clientController.showEditableClient(updateClient);
-                            }
-
-                            // Show the dialog and wait until the user closes it
-                            dialogeStage.showAndWait();
-
-                            return clientController.saveClicked;
-                        case CONTACT:
-                            // create the controller of contact layout controller
-                            ContactLayoutController contactController = loader.getController();
-                            contactController.setDialogStage(dialogeStage);
-                            if (updateContact != null) {
-                                contactController.showEditableContact(updateContact);
-                            }
-
-                            // Show the dialog and wait until the user closes it
-                            dialogeStage.showAndWait();
-
-                            return contactController.isSaveClicked;
-                    }
-
-                } catch (IOException ex) {
-                    Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-                    return false;
-                }
-                return false;
-            }
         });
     }
 
+    /**
+     * Event handler for close label.
+     *
+     * @param event of the mouse click
+     */
     @FXML
     public void closeHandler(MouseEvent event) {
-        ((Label) event.getSource()).getScene().getWindow().hide();
+        Platform.exit();
     }
 
+    /**
+     * Event handler for close button and close menu item.
+     *
+     * @param event of the mouse click
+     */
+    @FXML
+    public void closeMenuHandler(ActionEvent event) {
+        Platform.exit();
+    }
+
+    /**
+     * Event handler of minimize button.
+     *
+     * @param event of the mouse click
+     */
     @FXML
     public void minimizeHandler(MouseEvent event) {
         Stage stage = (Stage) ((Label) event.getSource()).getScene().getWindow();
 
         stage.setIconified(true);
+    }
+
+    /**
+     * Event handler for menu items
+     *
+     * @param event
+     * @return EventHandler object
+     */
+    @FXML
+    public void menusEventHandler(ActionEvent event) {
+        String selectedMenuItem = ((MenuItem) event.getSource()).getText();
+        switch (selectedMenuItem) {
+            case Constants.REFRESH_MENU_ITEM:
+                fillClientsList();
+                populateTreeView(clientsList);
+                break;
+            case Constants.ADD_CLIENT_MENU_ITEM:
+                if (showDialog("/view/ClientLayout.fxml", DialogType.CLIENT, null, null)) {
+                    fillClientsList();
+                    populateTreeView(clientsList);
+                }
+                break;
+            case Constants.ADD_CONTACT_MENU_ITEM:
+                if (showDialog("/view/ContactLayout.fxml", DialogType.CONTACT, null, null)) {
+                    fillClientsList();
+                    populateTreeView(clientsList);
+                }
+                break;
+            case Constants.EDIT_CLIENT_MENU_ITEM:
+                fillClientsList();
+                ChoiceDialog<Client> editClientDialog = new ChoiceDialog<>(clientsList.get(0), clientsList);
+                editClientDialog.setTitle("Client Dialog");
+                editClientDialog.setHeaderText("Client to update...");
+                editClientDialog.setContentText("Choose the client to update.");
+                Optional<Client> editClientResult = editClientDialog.showAndWait();
+                editClientResult.ifPresent((client) -> {
+                    if (showDialog("/view/ClientLayout.fxml", DialogType.CLIENT, client, null)) {
+                        fillClientsList();
+                        populateTreeView(clientsList);
+                    }
+                });
+                break;
+            case Constants.EDIT_CONTACT_MENU_ITEM:
+                fillContactsList();
+                ChoiceDialog<Contact> editContactDialog = new ChoiceDialog<>(contactsList.get(0), contactsList);
+                editContactDialog.setTitle("Contact Dialog");
+                editContactDialog.setHeaderText("Contact to update...");
+                editContactDialog.setContentText("Choose the contact to update.");
+                Optional<Contact> editContactResult = editContactDialog.showAndWait();
+                editContactResult.ifPresent((contact) -> {
+                    if (showDialog("view/ContactLayout.fxml", DialogType.CONTACT, null, contact)) {
+                        fillClientsList();
+                        populateTreeView(clientsList);
+                    }
+                });
+                break;
+            case Constants.DELETE_CLIENT_MENU_ITEM:
+                fillClientsList();
+                ChoiceDialog<Client> deleteClientDialog = new ChoiceDialog<>(clientsList.get(0), clientsList);
+                deleteClientDialog.setTitle("Client Dialog");
+                deleteClientDialog.setHeaderText("Client to update...");
+                deleteClientDialog.setContentText("Choose the client to remove.");
+                Optional<Client> deleteClientResult = deleteClientDialog.showAndWait();
+                deleteClientResult.ifPresent((client) -> {
+                    if (cclient.delete(client.getId()) == 1) {
+                        fillClientsList();
+                        populateTreeView(clientsList);
+                    } else {
+                        Utils.showErrorDialog("Remove Client Failure...", "There is no client with that ID in database...");
+                    }
+                });
+                break;
+            case Constants.DELETE_CONTACT_MENU_ITEM:
+                fillContactsList();
+                ChoiceDialog<Contact> deleteContactDialog = new ChoiceDialog<>(contactsList.get(0), contactsList);
+                deleteContactDialog.setTitle("Contact Dialog");
+                deleteContactDialog.setHeaderText("Contact to update...");
+                deleteContactDialog.setContentText("Choose the contact to update.");
+                Optional<Contact> deleteContactResult = deleteContactDialog.showAndWait();
+                deleteContactResult.ifPresent((contact) -> {
+                    if (ccontact.delete(contact.getId()) == 1) {
+                        fillClientsList();
+                        populateTreeView(clientsList);
+                    } else {
+                        Utils.showErrorDialog("Remove Contact Failure...", "There is no contact with that ID in database...");
+                    }
+                });
+                break;
+            case Constants.SETTINGS_MENU_ITEM:
+                //TODO
+                break;
+        }
     }
 
     /**
@@ -385,6 +360,11 @@ public class PostagiLayoutController implements Initializable {
         moveTrackingPopup.setOnHidden((e) -> resetMoveOperations());
     }
 
+    /**
+     * Event handler of dragging window.
+     *
+     * @param evt the mouse drag event
+     */
     @FXML
     public void moveWindow(MouseEvent evt) {
         if (dragging) {
@@ -401,6 +381,11 @@ public class PostagiLayoutController implements Initializable {
         }
     }
 
+    /**
+     * Event handler for end of dragging
+     *
+     * @param evt the mouse click release event
+     */
     @FXML
     public void endMoveWindow(MouseEvent evt) {
         if (dragging) {
@@ -814,6 +799,9 @@ public class PostagiLayoutController implements Initializable {
         }
     }
 
+    /**
+     * Reset the variables of moving the window.
+     */
     private void resetMoveOperations() {
         startMoveX = 0;
         startMoveY = 0;
@@ -821,4 +809,63 @@ public class PostagiLayoutController implements Initializable {
         moveTrackingRect = null;
     }
 
+    /**
+     * Show the dialog according to the type (client or contact)
+     *
+     * @param url the resource of fxml file that should be loaded
+     * @param flag the type of dialog (dialog for client or for contact)
+     * @return true when either button of save (save and quit or save and add
+     * new ) is clicked, otherwise returns false.
+     */
+    private boolean showDialog(String url, DialogType flag, Client updateClient, Contact updateContact) {
+        FXMLLoader loader = new FXMLLoader();
+        Stage dialogeStage = new Stage();
+
+        try {
+            loader.setLocation(Postagi.class.getResource(url));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            Scene scene = new Scene(page);
+            scene.setFill(null);
+
+            dialogeStage.initModality(Modality.WINDOW_MODAL);
+            dialogeStage.initOwner(Postagi.mainStage);
+            dialogeStage.initStyle(StageStyle.TRANSPARENT);
+            dialogeStage.setY(Postagi.mainStage.getY() + 48);
+            dialogeStage.setX(Postagi.mainStage.getX() + Postagi.mainStage.getWidth() - 5);
+            dialogeStage.setScene(scene);
+
+            switch (flag) {
+                case CLIENT:
+                    // create the controller of client layout controller
+                    ClientLayoutController clientController = loader.getController();
+                    clientController.setDialogStage(dialogeStage);
+                    if (updateClient != null) {
+                        clientController.showEditableClient(updateClient);
+                    }
+
+                    // Show the dialog and wait until the user closes it
+                    dialogeStage.showAndWait();
+
+                    return clientController.saveClicked;
+                case CONTACT:
+                    // create the controller of contact layout controller
+                    ContactLayoutController contactController = loader.getController();
+                    contactController.setDialogStage(dialogeStage);
+                    if (updateContact != null) {
+                        contactController.showEditableContact(updateContact);
+                    }
+
+                    // Show the dialog and wait until the user closes it
+                    dialogeStage.showAndWait();
+
+                    return contactController.isSaveClicked;
+            }
+
+        } catch (IOException ex) {
+            Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+        return false;
+    }
 }

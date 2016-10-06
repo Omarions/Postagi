@@ -22,6 +22,7 @@ public class Constants {
     public static final String EDIT_CONTACT_MENU_ITEM = "Edit Contact";
     public static final String DELETE_CLIENT_MENU_ITEM = "Delete Client";
     public static final String DELETE_CONTACT_MENU_ITEM = "Delete Contact";
+    public static final String SETTINGS_MENU_ITEM = "Settings";
     
     public static final Node CUSTOMER_ICON = new ImageView(
             new Image(Constants.class.getResourceAsStream("/images/customers_32.png")));

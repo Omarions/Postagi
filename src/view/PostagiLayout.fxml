@@ -8,12 +8,11 @@
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TreeView?>
-<?import javafx.scene.effect.DropShadow?>
 <?import javafx.scene.input.KeyCodeCombination?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -23,9 +22,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="vbox" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="view.PostagiLayoutController">
+<VBox fx:id="vbox" prefHeight="621.0" prefWidth="795.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="view.PostagiLayoutController">
    <children>
-      <HBox onDragDetected="#startMoveWindow" onMouseDragged="#moveWindow" onMouseReleased="#endMoveWindow" prefHeight="29.0" prefWidth="616.0" styleClass="title-bar">
+      <HBox onDragDetected="#startMoveWindow" onMouseDragged="#moveWindow" onMouseReleased="#endMoveWindow" prefHeight="29.0" prefWidth="616.0" styleClass="title-bar" VBox.vgrow="NEVER">
          <children>
             <StackPane HBox.hgrow="ALWAYS">
                <children>
@@ -64,148 +63,214 @@
             </StackPane>
          </children>
       </HBox>
-      <HBox prefHeight="40.0" prefWidth="616.0">
-         <children>
-            <MenuBar HBox.hgrow="ALWAYS">
-              <menus>
-                <Menu mnemonicParsing="false" text="File">
-                  <items>
-                    <MenuItem mnemonicParsing="false" onAction="#closeHandler" text="Close" />
-                  </items>
-                </Menu>
-                <Menu mnemonicParsing="false" text="Tools">
-                  <items>
-                    <MenuItem mnemonicParsing="false" text="Delete" />
-                  </items>
-                     <accelerator>
-                        <KeyCodeCombination alt="DOWN" code="T" control="UP" meta="UP" shift="UP" shortcut="UP" />
-                     </accelerator>
-                </Menu>
-                <Menu mnemonicParsing="false" text="Help">
-                  <items>
-                    <MenuItem mnemonicParsing="false" text="About" />
-                  </items>
-                </Menu>
-              </menus>
-            </MenuBar>
-         </children>
-      </HBox>
-      <VBox alignment="CENTER" VBox.vgrow="ALWAYS">
-         <children>
-            <AnchorPane id="AnchorPane" prefHeight="443.0" prefWidth="616.0">
+      <MenuBar nodeOrientation="LEFT_TO_RIGHT" prefHeight="45.0" prefWidth="616.0">
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem mnemonicParsing="false" onAction="#closeMenuHandler" text="Close" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Tools">
+            <items>
+              <MenuItem id="mbRefresh" mnemonicParsing="false" onAction="#menusEventHandler" text="Refresh" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <Menu mnemonicParsing="false" text="Clients">
+                    <items>
+                      <MenuItem id="mbAddClient" mnemonicParsing="false" onAction="#menusEventHandler" text="Add Client" />
+                        <MenuItem id="mbEditClient" mnemonicParsing="false" onAction="#menusEventHandler" text="Edit Client" />
+                        <MenuItem id="mbDeleteClient" mnemonicParsing="false" onAction="#menusEventHandler" text="Delete Client" />
+                    </items>
+                  </Menu>
+                  <Menu mnemonicParsing="false" text="Contacts">
+                    <items>
+                      <MenuItem id="mbAddContact" mnemonicParsing="false" onAction="#menusEventHandler" text="Add Contact" />
+                        <MenuItem id="mbEditContact" mnemonicParsing="false" onAction="#menusEventHandler" text="Edit Contact" />
+                        <MenuItem id="mbDeleteContact" mnemonicParsing="false" onAction="#menusEventHandler" text="Delete Contact" />
+                    </items>
+                  </Menu>
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem id="mbSettings" mnemonicParsing="false" text="Settings" />
+            </items>
+               <accelerator>
+                  <KeyCodeCombination alt="DOWN" code="T" control="UP" meta="UP" shift="UP" shortcut="UP" />
+               </accelerator>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <BorderPane fx:id="borderPaneMain" prefHeight="200.0" prefWidth="200.0" styleClass="default" stylesheets="@../css/style.css" VBox.vgrow="ALWAYS">
+         <left>
+            <VBox alignment="TOP_CENTER" prefHeight="499.0" prefWidth="239.0" spacing="5.0" BorderPane.alignment="CENTER">
                <children>
-                  <BorderPane fx:id="borderPaneMain" layoutX="-28.0" layoutY="14.0" prefHeight="200.0" prefWidth="200.0" styleClass="default" stylesheets="@../css/style.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                     <left>
-                        <VBox prefHeight="299.0" prefWidth="184.0" spacing="5.0" BorderPane.alignment="CENTER">
+                  <VBox alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" VBox.vgrow="NEVER">
                            <children>
                               <Label text="Choose to create Mail List:" />
-                              <TreeView fx:id="tvTo" prefHeight="349.0" prefWidth="184.0" />
-                              <HBox alignment="CENTER_LEFT" prefHeight="31.0" prefWidth="184.0" spacing="5.0">
+                           </children>
+                        </HBox>
+                        <TreeView fx:id="tvTo" prefHeight="349.0" prefWidth="184.0" VBox.vgrow="ALWAYS" />
+                     </children>
+                  </VBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="31.0" prefWidth="184.0" spacing="5.0">
+                     <children>
+                        <HBox HBox.hgrow="ALWAYS">
+                           <children>
+                              <TextField fx:id="tfTagFilter" prefHeight="31.0" prefWidth="142.0" promptText="FIlter by tags (#tag1,#tag2)" style="-fx-background-radius: 5;" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                        <Button mnemonicParsing="false" onAction="#filter" styleClass="flat_button" text="Filter" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </left>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+         <center>
+            <BorderPane prefHeight="200.0" prefWidth="572.0" BorderPane.alignment="CENTER">
+               <top>
+                  <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                     <children>
+                        <GridPane fx:id="grdHeader" alignment="CENTER_LEFT" vgap="5.0" HBox.hgrow="ALWAYS">
+                          <columnConstraints>
+                            <ColumnConstraints halignment="LEFT" hgrow="NEVER" maxWidth="140.0" minWidth="10.0" prefWidth="59.0" />
+                            <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" minWidth="10.0" prefWidth="477.0" />
+                          </columnConstraints>
+                          <rowConstraints>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                          </rowConstraints>
+                           <children>
+                              <Label text="From" />
+                              <Label text="CC" GridPane.rowIndex="1" />
+                              <Label text="Subject" GridPane.rowIndex="2" />
+                              <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="3.0" GridPane.columnIndex="1">
                                  <children>
-                                    <TextField fx:id="tfTagFilter" prefHeight="31.0" prefWidth="142.0" promptText="FIlter by tags (#tag1,#tag2)" style="-fx-background-radius: 5;" />
-                                    <Button mnemonicParsing="false" onAction="#filter" styleClass="flat_button" text="Filter" />
+                                    <StackPane HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <HBox spacing="8.0" StackPane.alignment="CENTER">
+                                             <children>
+                                                <HBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                                                   <children>
+                                                      <TextField fx:id="tfFrom" prefHeight="31.0" prefWidth="274.0" promptText="Mail to send from" style="-fx-background-radius: 5;" text="omar@ngc-eg.com" HBox.hgrow="ALWAYS" />
+                                                   </children>
+                                                </HBox>
+                                                <HBox alignment="CENTER_RIGHT" prefHeight="31.0" prefWidth="218.0" spacing="5.0" HBox.hgrow="NEVER">
+                                                   <children>
+                                                      <Label text="Password" />
+                                                      <HBox HBox.hgrow="ALWAYS">
+                                                         <children>
+                                                            <PasswordField fx:id="pfPassword" prefHeight="31.0" prefWidth="138.0" promptText="Password of account" style="-fx-background-radius: 5;" text="mendl970552" HBox.hgrow="ALWAYS" />
+                                                         </children>
+                                                      </HBox>
+                                                   </children>
+                                                </HBox>
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </StackPane>
                                  </children>
                               </HBox>
+                              <HBox GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                 <children>
+                                    <TextField fx:id="tfCC" prefHeight="31.0" prefWidth="415.0" promptText="Enter CC mails if required" style="-fx-background-radius: 5;" text="omar@ngc-eg.com" HBox.hgrow="ALWAYS" />
+                                 </children>
+                              </HBox>
+                              <HBox GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                 <children>
+                                    <TextField fx:id="tfTitle" promptText="Subject of Mail" style="-fx-background-radius: 5;" text="Test mail" HBox.hgrow="ALWAYS" />
+                                 </children>
+                              </HBox>
+                              <Label text="Attach" GridPane.rowIndex="3" />
+                              <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="15.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                                 <children>
+                                    <StackPane HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <HBox alignment="CENTER_LEFT" StackPane.alignment="CENTER">
+                                             <children>
+                                                <HBox alignment="CENTER_LEFT" prefHeight="31.0" prefWidth="404.0" HBox.hgrow="ALWAYS">
+                                                   <children>
+                                                      <TextField fx:id="tfAttach" prefHeight="31.0" prefWidth="303.0" promptText="Write full path of attachment or browse" style="-fx-background-radius: 5;" HBox.hgrow="ALWAYS" />
+                                                   </children>
+                                                </HBox>
+                                                <HBox alignment="CENTER_RIGHT" prefHeight="31.0" prefWidth="67.0" HBox.hgrow="NEVER">
+                                                   <children>
+                                                      <Button mnemonicParsing="false" onAction="#browse" prefHeight="22.0" prefWidth="57.0" styleClass="flat_button" text="Browse" HBox.hgrow="NEVER" />
+                                                   </children>
+                                                </HBox>
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </StackPane>
+                                 </children>
+                              </HBox>
+                              <HBox fx:id="hbAttachments" alignment="CENTER_LEFT" prefHeight="30.0" prefWidth="505.0" stylesheets="@../../css/style.css" GridPane.columnSpan="2147483647" GridPane.rowIndex="4" />
+                              
+                                                                                          
+                              
+                                                                                       </children>
+                           <padding>
+                              <Insets left="5.0" />
+                           </padding>
+                        </GridPane>
+                     </children>
+                  </HBox>
+               </top>
+               <BorderPane.margin>
+                  <Insets left="5.0" />
+               </BorderPane.margin>
+               <center>
+                  <VBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                     <children>
+                        <Label text="Mail Contents">
+                           <padding>
+                              <Insets left="5.0" />
+                           </padding>
+                        </Label>
+                        <VBox prefHeight="200.0" prefWidth="100.0" VBox.vgrow="ALWAYS">
+                           <children>
+                              <TextArea fx:id="taContents" prefHeight="311.0" prefWidth="596.0" promptText="Message Content" style="-fx-border-radius: 20;" text="Test mail, to be removed" VBox.vgrow="ALWAYS" />
                            </children>
                         </VBox>
-                     </left>
+                     </children>
+                  </VBox>
+               </center>
+            </BorderPane>
+         </center>
+         <bottom>
+            <HBox alignment="CENTER_RIGHT" prefHeight="27.0" prefWidth="606.0" spacing="5.0" BorderPane.alignment="CENTER">
+               <children>
+                  <HBox fx:id="hbStatusBar" alignment="CENTER_LEFT" prefHeight="20.0" prefWidth="530.0" spacing="5.0" styleClass="statusbar" stylesheets="@../css/style.css" visible="false">
                      <padding>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                        <Insets bottom="3.0" left="5.0" right="5.0" top="3.0" />
                      </padding>
-                     <center>
-                        <BorderPane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-                           <top>
-                              <GridPane fx:id="grdHeader" vgap="5.0" BorderPane.alignment="CENTER">
-                                <columnConstraints>
-                                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="140.0" minWidth="10.0" prefWidth="53.0" />
-                                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="373.0" minWidth="10.0" prefWidth="359.0" />
-                                </columnConstraints>
-                                <rowConstraints>
-                                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                </rowConstraints>
-                                 <children>
-                                    <Label text="From" />
-                                    <Label text="CC" GridPane.rowIndex="1" />
-                                    <Label text="Subject" GridPane.rowIndex="2" />
-                                    <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="3.0" GridPane.columnIndex="1">
-                                       <children>
-                                          <TextField fx:id="tfFrom" prefHeight="31.0" prefWidth="211.0" promptText="Mail to send from" style="-fx-background-radius: 5;" text="omar@ngc-eg.com" />
-                                          <Label text="Password" />
-                                          <PasswordField fx:id="pfPassword" prefHeight="31.0" prefWidth="84.0" promptText="Password of account" style="-fx-background-radius: 5;" text="mendl970552" />
-                                       </children>
-                                    </HBox>
-                                    <TextField fx:id="tfCC" promptText="Enter CC mails if required" style="-fx-background-radius: 5;" text="omar@ngc-eg.com" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                    <TextField fx:id="tfTitle" promptText="Subject of Mail" style="-fx-background-radius: 5;" text="Test mail" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                    <Label text="Attach" GridPane.rowIndex="3" />
-                                    <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="15.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
-                                       <children>
-                                          <TextField fx:id="tfAttach" prefHeight="31.0" prefWidth="303.0" promptText="Write full path of attachment or browse" style="-fx-background-radius: 5;" />
-                                          <Button mnemonicParsing="false" onAction="#browse" prefHeight="22.0" prefWidth="57.0" styleClass="flat_button" text="Browse" />
-                                       </children>
-                                    </HBox>
-                                    <HBox fx:id="hbAttachments" prefHeight="100.0" prefWidth="200.0" stylesheets="@../../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                                    
-                                                
-                                    
-                                             </children>
-                                 <padding>
-                                    <Insets left="5.0" />
-                                 </padding>
-                              </GridPane>
-                           </top>
-                           <BorderPane.margin>
-                              <Insets left="5.0" />
-                           </BorderPane.margin>
-                           <center>
-                              <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
-                                 <children>
-                                    <Label text="Mail Contents">
-                                       <padding>
-                                          <Insets left="5.0" />
-                                       </padding>
-                                    </Label>
-                                    <TextArea fx:id="taContents" prefHeight="235.0" prefWidth="417.0" promptText="Message Content" style="-fx-border-radius: 20;" text="Test mail, to be removed" />
-                                 </children>
-                              </VBox>
-                           </center>
-                        </BorderPane>
-                     </center>
-                     <bottom>
-                        <HBox alignment="CENTER_RIGHT" prefHeight="27.0" prefWidth="606.0" spacing="5.0" BorderPane.alignment="CENTER">
-                           <children>
-                              <HBox fx:id="hbStatusBar" alignment="CENTER_LEFT" prefHeight="20.0" prefWidth="530.0" spacing="5.0" styleClass="statusbar" stylesheets="@../css/style.css" visible="false">
-                                 <padding>
-                                    <Insets bottom="3.0" left="5.0" right="5.0" top="3.0" />
-                                 </padding>
-                                 <children>
-                                    <Label fx:id="lblStatus" prefHeight="21.0" prefWidth="328.0" text="Label" />
-                                    <ProgressBar fx:id="progStatus" prefWidth="200.0" progress="0.0" />
-                                 </children>
-                                 <opaqueInsets>
-                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                 </opaqueInsets>
-                              </HBox>
-                              <Button mnemonicParsing="false" onAction="#sendHandler" prefHeight="25.0" prefWidth="74.0" styleClass="flat_button" text="Send" />
-                           </children>
-                           <opaqueInsets>
-                              <Insets />
-                           </opaqueInsets>
-                           <padding>
-                              <Insets top="5.0" />
-                           </padding>
-                        </HBox>
-                     </bottom>
-                  </BorderPane>
+                     <children>
+                        <Label fx:id="lblStatus" prefHeight="21.0" prefWidth="328.0" text="Label" />
+                        <ProgressBar fx:id="progStatus" prefWidth="200.0" progress="0.0" />
+                     </children>
+                     <opaqueInsets>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </opaqueInsets>
+                  </HBox>
+                  <Button mnemonicParsing="false" onAction="#sendHandler" prefHeight="25.0" prefWidth="74.0" styleClass="flat_button" text="Send" />
                </children>
-               <effect>
-                  <DropShadow />
-               </effect>
-            </AnchorPane>
-         </children>
-      </VBox>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+               <padding>
+                  <Insets top="5.0" />
+               </padding>
+            </HBox>
+         </bottom>
+      </BorderPane>
    </children>
 </VBox>
