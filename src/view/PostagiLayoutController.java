@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package postagi;
+package view;
 
 import controller.cClient;
 import controller.cContact;
@@ -87,6 +87,7 @@ import javax.xml.ws.Service;
 import model.Client;
 import model.Contact;
 import org.controlsfx.dialog.ProgressDialog;
+import postagi.Postagi;
 import utils.Constants;
 import utils.DialogType;
 import utils.Utils;
