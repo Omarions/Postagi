@@ -52,11 +52,11 @@
                   <TextField fx:id="tfWhatsapp" promptText="Separated by &quot;,&quot;" styleClass="textField" stylesheets="@../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                   <TextField fx:id="tfSkype" promptText="Separated by &quot;,&quot;" styleClass="textField" stylesheets="@../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                   <TextField fx:id="tfOthers" promptText="Any other contact info" styleClass="textField" stylesheets="@../css/style.css" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-                  <Button mnemonicParsing="false" onAction="#saveHandler" prefWidth="93.0" styleClass="flat_button" stylesheets="@../css/style.css" text="Save &amp; Add New" GridPane.rowIndex="8" />
+                  <Button mnemonicParsing="false" onAction="#saveHandler" prefWidth="93.0" styleClass="flat-button" stylesheets="@../css/style.css" text="Save &amp; Add New" GridPane.rowIndex="8" />
                   <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="8">
                      <children>
-                        <Button cancelButton="true" mnemonicParsing="false" onAction="#cancelHandler" styleClass="flat_button" stylesheets="@../css/style.css" text="Cancel" />
-                        <Button mnemonicParsing="false" onAction="#saveHandler" styleClass="flat_button" stylesheets="@../css/style.css" text="Save &amp; Quit" />
+                        <Button cancelButton="true" mnemonicParsing="false" onAction="#cancelHandler" styleClass="flat-button" stylesheets="@../css/style.css" text="Cancel" />
+                        <Button mnemonicParsing="false" onAction="#saveHandler" styleClass="flat-button" stylesheets="@../css/style.css" text="Save &amp; Quit" />
                      </children>
                      <GridPane.margin>
                         <Insets />

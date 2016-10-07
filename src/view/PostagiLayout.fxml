@@ -67,29 +67,29 @@
         <menus>
           <Menu mnemonicParsing="false" text="File">
             <items>
-              <MenuItem mnemonicParsing="false" onAction="#closeMenuHandler" text="Close" />
+              <MenuItem fx:id="miExit" mnemonicParsing="false" onAction="#closeMenuHandler" text="Exit" />
             </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Tools">
             <items>
-              <MenuItem id="mbRefresh" mnemonicParsing="false" onAction="#menusEventHandler" text="Refresh" />
+              <MenuItem id="mbRefresh" fx:id="miRefresh" mnemonicParsing="false" onAction="#menusEventHandler" text="Refresh" />
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <Menu mnemonicParsing="false" text="Clients">
+                  <Menu fx:id="muClients" mnemonicParsing="false" text="Clients">
                     <items>
-                      <MenuItem id="mbAddClient" mnemonicParsing="false" onAction="#menusEventHandler" text="Add Client" />
-                        <MenuItem id="mbEditClient" mnemonicParsing="false" onAction="#menusEventHandler" text="Edit Client" />
-                        <MenuItem id="mbDeleteClient" mnemonicParsing="false" onAction="#menusEventHandler" text="Delete Client" />
+                      <MenuItem id="mbAddClient" fx:id="miAddClient" mnemonicParsing="false" onAction="#menusEventHandler" text="Add Client" />
+                        <MenuItem id="mbEditClient" fx:id="miEditClient" mnemonicParsing="false" onAction="#menusEventHandler" text="Edit Client" />
+                        <MenuItem id="mbDeleteClient" fx:id="miDeleteClient" mnemonicParsing="false" onAction="#menusEventHandler" text="Delete Client" />
                     </items>
                   </Menu>
-                  <Menu mnemonicParsing="false" text="Contacts">
+                  <Menu fx:id="muContacts" mnemonicParsing="false" text="Contacts">
                     <items>
-                      <MenuItem id="mbAddContact" mnemonicParsing="false" onAction="#menusEventHandler" text="Add Contact" />
-                        <MenuItem id="mbEditContact" mnemonicParsing="false" onAction="#menusEventHandler" text="Edit Contact" />
-                        <MenuItem id="mbDeleteContact" mnemonicParsing="false" onAction="#menusEventHandler" text="Delete Contact" />
+                      <MenuItem id="mbAddContact" fx:id="miAddContact" mnemonicParsing="false" onAction="#menusEventHandler" text="Add Contact" />
+                        <MenuItem id="mbEditContact" fx:id="miEditContact" mnemonicParsing="false" onAction="#menusEventHandler" text="Edit Contact" />
+                        <MenuItem id="mbDeleteContact" fx:id="miDeleteContact" mnemonicParsing="false" onAction="#menusEventHandler" text="Delete Contact" />
                     </items>
                   </Menu>
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem id="mbSettings" mnemonicParsing="false" text="Settings" />
+                  <MenuItem id="mbSettings" fx:id="miSettings" mnemonicParsing="false" onAction="#menusEventHandler" text="Settings" />
             </items>
                <accelerator>
                   <KeyCodeCombination alt="DOWN" code="T" control="UP" meta="UP" shift="UP" shortcut="UP" />
@@ -97,7 +97,7 @@
           </Menu>
           <Menu mnemonicParsing="false" text="Help">
             <items>
-              <MenuItem mnemonicParsing="false" text="About" />
+              <MenuItem fx:id="miAbout" mnemonicParsing="false" text="About" />
             </items>
           </Menu>
         </menus>
@@ -123,7 +123,7 @@
                               <TextField fx:id="tfTagFilter" prefHeight="31.0" prefWidth="142.0" promptText="FIlter by tags (#tag1,#tag2)" style="-fx-background-radius: 5;" HBox.hgrow="ALWAYS" />
                            </children>
                         </HBox>
-                        <Button mnemonicParsing="false" onAction="#filter" styleClass="flat_button" text="Filter" />
+                        <Button mnemonicParsing="false" onAction="#filter" styleClass="flat-button" text="Filter" />
                      </children>
                   </HBox>
                </children>
@@ -204,7 +204,7 @@
                                                 </HBox>
                                                 <HBox alignment="CENTER_RIGHT" prefHeight="31.0" prefWidth="67.0" HBox.hgrow="NEVER">
                                                    <children>
-                                                      <Button mnemonicParsing="false" onAction="#browse" prefHeight="22.0" prefWidth="57.0" styleClass="flat_button" text="Browse" HBox.hgrow="NEVER" />
+                                                      <Button mnemonicParsing="false" onAction="#browse" prefHeight="22.0" prefWidth="57.0" styleClass="flat-button" text="Browse" HBox.hgrow="NEVER" />
                                                    </children>
                                                 </HBox>
                                              </children>
@@ -249,19 +249,23 @@
          <bottom>
             <HBox alignment="CENTER_RIGHT" prefHeight="27.0" prefWidth="606.0" spacing="5.0" BorderPane.alignment="CENTER">
                <children>
-                  <HBox fx:id="hbStatusBar" alignment="CENTER_LEFT" prefHeight="20.0" prefWidth="530.0" spacing="5.0" styleClass="statusbar" stylesheets="@../css/style.css" visible="false">
+                  <HBox fx:id="hbStatusBar" alignment="CENTER_LEFT" prefHeight="20.0" prefWidth="530.0" spacing="5.0" styleClass="statusbar" stylesheets="@../css/style.css" visible="false" HBox.hgrow="ALWAYS">
                      <padding>
                         <Insets bottom="3.0" left="5.0" right="5.0" top="3.0" />
                      </padding>
                      <children>
-                        <Label fx:id="lblStatus" prefHeight="21.0" prefWidth="328.0" text="Label" />
-                        <ProgressBar fx:id="progStatus" prefWidth="200.0" progress="0.0" />
+                        <HBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label fx:id="lblStatus" prefHeight="21.0" prefWidth="328.0" text="Label" />
+                           </children>
+                        </HBox>
+                        <ProgressBar fx:id="progStatus" prefHeight="17.0" prefWidth="246.0" progress="0.0" />
                      </children>
                      <opaqueInsets>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </opaqueInsets>
                   </HBox>
-                  <Button mnemonicParsing="false" onAction="#sendHandler" prefHeight="25.0" prefWidth="74.0" styleClass="flat_button" text="Send" />
+                  <Button mnemonicParsing="false" onAction="#sendHandler" prefHeight="25.0" prefWidth="74.0" styleClass="flat-button" text="Send" />
                </children>
                <opaqueInsets>
                   <Insets />

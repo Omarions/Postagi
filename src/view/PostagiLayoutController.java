@@ -8,7 +8,11 @@ package view;
 import controller.cClient;
 import controller.cContact;
 import java.awt.Desktop;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
@@ -48,6 +52,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -55,7 +60,9 @@ import javafx.scene.control.cell.CheckBoxTreeCell;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
@@ -121,17 +128,43 @@ public class PostagiLayoutController implements Initializable {
     private Label lblStatus;
     @FXML
     private ProgressBar progStatus;
-
+    @FXML
+    private MenuItem miExit;
+    @FXML
+    private MenuItem miRefresh;
+    @FXML
+    private Menu muClients;
+    @FXML
+    private MenuItem miAddClient;
+    @FXML
+    private MenuItem miEditClient;
+    @FXML
+    private MenuItem miDeleteClient;
+    @FXML
+    private Menu muContacts;
+    @FXML
+    private MenuItem miAddContact;
+    @FXML
+    private MenuItem miEditContact;
+    @FXML
+    private MenuItem miDeleteContact;
+    @FXML
+    private MenuItem miSettings;
+    @FXML
+    private MenuItem miAbout;
+    
     private final CheckBoxTreeItem<String> rootNode = new CheckBoxTreeItem<>("Customers", Constants.CUSTOMER_ICON);
     private final List<TreeItem<String>> cbTreeItems = new ArrayList<>();
 
     private final ObservableList<Client> clientsList = FXCollections.observableArrayList();
     private final ObservableList<Contact> contactsList = FXCollections.observableArrayList();
     private final List<File> attachments = new ArrayList<>();
+    private Properties settingProps;
     private BodyPart msgBodyPart = new MimeBodyPart();
     private cClient cclient;
     private cContact ccontact;
-
+    private int currentTimerSpin = 0;
+    
     //variables for dragging the window
     private double startMoveX = -1, startMoveY = -1;
     private Boolean dragging = false;
@@ -142,7 +175,27 @@ public class PostagiLayoutController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         cclient = new cClient();
         ccontact = new cContact();
-
+        
+        //init the menus icons
+        miExit.setGraphic(new ImageView(Constants.Exit_MENU_ICON));
+        
+        miRefresh.setGraphic(new ImageView(Constants.REFRESH_MENU_ITEM_ICON));
+        
+        muClients.setGraphic(new ImageView(Constants.CLIENT_ICON));
+        muContacts.setGraphic(new ImageView(Constants.CONTACT_ICON));
+        
+        miAddClient.setGraphic(new ImageView(Constants.ADD_MENU_ITEM_ICON));
+        miEditClient.setGraphic(new ImageView(Constants.EDIT_MENU_ITEM_ICON));
+        miDeleteClient.setGraphic(new ImageView(Constants.DELETE_MENU_ITEM_ICON));
+        
+        miAddContact.setGraphic(new ImageView(Constants.ADD_MENU_ITEM_ICON));
+        miEditContact.setGraphic(new ImageView(Constants.EDIT_MENU_ITEM_ICON));
+        miDeleteContact.setGraphic(new ImageView(Constants.DELETE_MENU_ITEM_ICON));
+        
+        miSettings.setGraphic(new ImageView(Constants.SETTING_MENU_ICON));
+        
+        miAbout.setGraphic(new ImageView(Constants.ABOUT_MENU_ICON));
+        
         fillClientsList();
 
         populateTreeView(clientsList);
@@ -333,7 +386,24 @@ public class PostagiLayoutController implements Initializable {
                 });
                 break;
             case Constants.SETTINGS_MENU_ITEM:
-                //TODO
+                Properties props = getProperties();
+                String strCurrentSettings = "Not Set...";
+                
+                if (props != null) {
+                    strCurrentSettings = props.getProperty(Constants.HOST_KEY);
+                    currentTimerSpin = Integer.valueOf(
+                            props.getProperty(Constants.SPIN_KEY));
+                }
+                Optional<Map<String,String>> settingResult = 
+                        Utils.showSettingsDialog(strCurrentSettings, currentTimerSpin);
+                settingResult.ifPresent((result) -> {
+                    if (settingResult.get().isEmpty()) {
+                        setProperties(Constants.HOST_DEFAULT_VALUE,currentTimerSpin);
+                    } else {
+                        setProperties(result.get(Constants.HOST_KEY), 
+                                Integer.valueOf(result.get(Constants.SPIN_KEY)));
+                    }
+                });
                 break;
         }
     }
@@ -432,6 +502,9 @@ public class PostagiLayoutController implements Initializable {
      */
     @FXML
     public void sendHandler(ActionEvent event) {
+        if (getSelectedMails().isEmpty()) {
+            Utils.showErrorDialog("Empty Mail List", "No mails selected!");
+        }else{
         //create service to send mails in background and show progress dialog for the user
         javafx.concurrent.Service<Void> service = new javafx.concurrent.Service<Void>() {
             @Override
@@ -442,15 +515,24 @@ public class PostagiLayoutController implements Initializable {
                     @Override
                     protected Void call() throws Exception {
                         //update the progress dialog message
-                        updateMessage("Sending mails . . .");
+                        updateMessage("Preparing To Send The Mails . . .");
                         //update the progress of progress dialog from 0 to size of mails
                         updateProgress(0, mailsSize);
                         //loop on mails and send them one by one and update the progress dialog.
-                        //to show how many mail is sent.
+                        //to show how many mails are sent.
                         for (int i = 0; i < mailsSize; i++) {
                             if (sendMail(getSelectedMails().get(i))) {
                                 updateProgress(i + 1, mailsSize);
-                                updateMessage("send " + (i + 1) + "/" + mailsSize + " mails!");
+                                StringBuilder statusMsg = new StringBuilder();
+                                statusMsg.append("Sending to <")
+                                        .append(getSelectedMails().get(i))
+                                        .append(">. ")
+                                        .append("Sent ")
+                                        .append(i)
+                                        .append("/")
+                                        .append(mailsSize)
+                                        .append(" mails...");
+                                updateMessage(statusMsg.toString());
                             }
                         }
                         updateMessage("Send all.");
@@ -476,7 +558,7 @@ public class PostagiLayoutController implements Initializable {
 
         //start the service.
         service.start();
-
+        }
     }
 
     /**
@@ -700,10 +782,6 @@ public class PostagiLayoutController implements Initializable {
      * Send mail code using JavaMail API
      */
     private boolean sendMail(String to) {
-        Properties props = new Properties();
-        props.put("mail.smtp.host", Constants.HOST);
-        props.put("mail.smtp.auth", true);
-
         Optional<Map<String, List<String>>> parts = createMail();
         try {
             if (parts.isPresent()) {
@@ -725,51 +803,49 @@ public class PostagiLayoutController implements Initializable {
                 }
 
                 //Create the session for sending the message.
-                Session session = Session.getDefaultInstance(props, new Authenticator() {
-                    @Override
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        //authenticate the sender account with user and password
-                        return new PasswordAuthentication(FROM, PASSWORD);
+                if (getSession(FROM, PASSWORD) != null) {
+                    //create the message object to be sent
+                    MimeMessage message = new MimeMessage(getSession(FROM, PASSWORD));
+                    //set the parts of the message
+                    message.setFrom(new InternetAddress(FROM));
+                    message.addRecipients(Message.RecipientType.TO, to);
+                    message.addRecipients(Message.RecipientType.CC, addressesCC);
+                    message.setSubject(SUBJECT);
+                    //Set the body of the message
+
+                    msgBodyPart.setText(CONTENT);
+
+                    Multipart multiPart = new MimeMultipart();
+                    multiPart.addBodyPart(msgBodyPart);
+                    //Add the attachments
+                    if (!attachments.isEmpty()) {
+                        attachments.stream().filter(File::exists).forEach((file) -> {
+                            msgBodyPart = new MimeBodyPart();
+                            try {
+                                DataSource dataSource = new FileDataSource(file);
+                                msgBodyPart.setDataHandler(new DataHandler(dataSource));
+                                msgBodyPart.setFileName(file.getName());
+                                multiPart.addBodyPart(msgBodyPart);
+                            } catch (MessagingException ex) {
+                                Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+                                Utils.showExceptionDialog("Message Error...", "Exception happen while creating the attachment!", ex);
+                            }
+                        });
+
                     }
-                });
-                //create the message object to be sent
-                MimeMessage message = new MimeMessage(session);
-                //set the parts of the message
-                message.setFrom(new InternetAddress(FROM));
-                message.addRecipients(Message.RecipientType.TO, to);
-                message.addRecipients(Message.RecipientType.CC, addressesCC);
-                message.setSubject(SUBJECT);
-                //Set the body of the message
 
-                msgBodyPart.setText(CONTENT);
-
-                Multipart multiPart = new MimeMultipart();
-                multiPart.addBodyPart(msgBodyPart);
-                //Add the attachments
-                if (!attachments.isEmpty()) {
-                    attachments.stream().filter(File::exists).forEach((file) -> {
-                        msgBodyPart = new MimeBodyPart();
-                        try {
-                            DataSource dataSource = new FileDataSource(file);
-                            msgBodyPart.setDataHandler(new DataHandler(dataSource));
-                            msgBodyPart.setFileName(file.getName());
-                            multiPart.addBodyPart(msgBodyPart);
-                        } catch (MessagingException ex) {
-                            Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-                            Utils.showExceptionDialog("Message Error...", "Exception happen while creating the attachment!", ex.toString());
-                        }
-                    });
-
+                    message.setContent(multiPart);
+                    //send the message
+                    Transport.send(message);
+                    return true;
+                } else {
+                    Utils.showErrorDialog("Session Error...", "Cannot open session to send mails!");
+                    return false;
                 }
-
-                message.setContent(multiPart);
-                //send the message
-                Transport.send(message);
-                return true;
             }
         } catch (MessagingException ex) {
             Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-            Utils.showExceptionDialog("Message Failure...", "Exception happen while send message!", ex.toString());
+            Utils.showExceptionDialog("Message Failure...", "Exception happen while send message!", ex);
             return false;
         }
         return false;
@@ -796,6 +872,76 @@ public class PostagiLayoutController implements Initializable {
             contactsList.setAll(ccontact.getAll());
         } catch (SQLException ex) {
             Utils.showErrorDialog("Database Error...", ex.toString());
+        }
+    }
+
+    /**
+     * Create new session to send message.
+     *
+     * @param user the sender mail
+     * @param password of sender mail
+     * @return new session with properties which have the SMTP server host, and
+     * authentication of user and password.
+     */
+    private Session getSession(String user, String password) {
+        if (getProperties() != null) {
+            Session session = Session.getDefaultInstance(getProperties(), new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(user, password);
+                }
+            });
+            return session;
+        }
+        return null;
+    }
+
+    /**
+     * Create the properties object for session, it loads the properties from
+     * the settings file first if exists, otherwise it displays the error dialog
+     *
+     * @return properties object with values from settings file.
+     */
+    private Properties getProperties() {
+        Properties props = new Properties();
+        File propFile = new File(Constants.PROP_FILE_URL);
+        if (propFile.exists()) {
+            try {
+                props.loadFromXML(new BufferedInputStream(new FileInputStream(propFile)));
+                return props;
+            } catch (IOException ex) {
+                Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+                Utils.showExceptionDialog("IO Exception", "Error in loading file!", ex);
+                return null;
+            }
+        } else {
+            Utils.showErrorDialog("File Error...", "The properties file is not exist!");
+            return null;
+        }
+    }
+
+    /**
+     * set the values of host to the properties object and write it to the
+     * settings file
+     *
+     * @param host the smtp server
+     */
+    private void setProperties(String host, int timerSpin) {
+        Properties props = new Properties();
+        File propFile = new File(Constants.PROP_FILE_URL);
+        if (propFile.exists()) {
+            try {
+                props.setProperty(Constants.HOST_KEY, host);
+                props.setProperty(Constants.AUTH_KEY, Constants.AUTH_VALUE);
+                props.setProperty(Constants.SPIN_KEY, String.valueOf(timerSpin));
+                
+                props.storeToXML(new BufferedOutputStream(new FileOutputStream(propFile)), host);
+            } catch (IOException ex) {
+                Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+                Utils.showExceptionDialog("IO Exception", "Error in loading file!", ex);
+            }
+        } else {
+            Utils.showErrorDialog("File Error...", "The properties file is not exist!");
         }
     }
 
@@ -868,4 +1014,5 @@ public class PostagiLayoutController implements Initializable {
         }
         return false;
     }
+
 }

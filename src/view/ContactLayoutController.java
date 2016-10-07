@@ -76,7 +76,7 @@ public class ContactLayoutController implements Initializable {
         }catch(SQLException ex){
             Utils.showExceptionDialog("Error in Database",
                     "The following exception occurred while retrieving data from database...",
-                    ex.toString());
+                    ex);
         }
     }
 

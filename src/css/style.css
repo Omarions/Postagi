@@ -41,7 +41,7 @@
 .textField{
     -fx-background-radius: 5px;
 }
-.flat_button{
+.flat-button{
     -fx-background-color: 
         rgba(0,0,0,0.08),
         linear-gradient(#9a9a9a, #909090),
@@ -52,7 +52,7 @@
     -fx-text-fill: #242d35;
     -fx-font-size: 11px;
 }
-.flat_button:hover{
+.flat-button:hover{
     -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );
 }
 .statusbar{
@@ -76,11 +76,11 @@
     -fx-background-color: transparent;
 }
 #deleteIcon{
-    -fx-image: url('/images/Delete_inactive.png');
+    -fx-image: url('/images/delete_inactive.png');
     -fx-background-insets: 0 0 -1 0,0,1;
     -fx-background-radius: 5,5,4;
     -fx-padding: 3 5 3 5;
 }
 #deleteIcon:hover{
-    -fx-image: url('/images/Delete_active.png');
+    -fx-image: url('/images/delete_active.png');
 }
