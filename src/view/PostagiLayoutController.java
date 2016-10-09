@@ -16,6 +16,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
+import java.time.LocalTime;
+import java.util.ArrayDeque;
+import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,16 +26,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Queue;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.ScheduledService;
 import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -52,7 +60,6 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -60,9 +67,7 @@ import javafx.scene.control.cell.CheckBoxTreeCell;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
@@ -88,6 +93,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import javax.swing.event.HyperlinkEvent;
 import model.Client;
 import model.Contact;
 import postagi.Postagi;
@@ -117,7 +123,10 @@ public class PostagiLayoutController implements Initializable {
     private TextArea taContents;
     @FXML
     private HBox hbAttachments;
-
+    @FXML
+    private Label lblSkip;
+    @FXML
+    private Label lblCancelAll;
     @FXML
     private TreeView tvTo;
     @FXML
@@ -152,7 +161,7 @@ public class PostagiLayoutController implements Initializable {
     private MenuItem miSettings;
     @FXML
     private MenuItem miAbout;
-    
+
     private final CheckBoxTreeItem<String> rootNode = new CheckBoxTreeItem<>("Customers", Constants.CUSTOMER_ICON);
     private final List<TreeItem<String>> cbTreeItems = new ArrayList<>();
 
@@ -164,7 +173,8 @@ public class PostagiLayoutController implements Initializable {
     private cClient cclient;
     private cContact ccontact;
     private int currentTimerSpin = 0;
-    
+    static int counter = 0;
+
     //variables for dragging the window
     private double startMoveX = -1, startMoveY = -1;
     private Boolean dragging = false;
@@ -175,27 +185,27 @@ public class PostagiLayoutController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         cclient = new cClient();
         ccontact = new cContact();
-        
+
         //init the menus icons
         miExit.setGraphic(new ImageView(Constants.Exit_MENU_ICON));
-        
+
         miRefresh.setGraphic(new ImageView(Constants.REFRESH_MENU_ITEM_ICON));
-        
+
         muClients.setGraphic(new ImageView(Constants.CLIENT_ICON));
         muContacts.setGraphic(new ImageView(Constants.CONTACT_ICON));
-        
+
         miAddClient.setGraphic(new ImageView(Constants.ADD_MENU_ITEM_ICON));
         miEditClient.setGraphic(new ImageView(Constants.EDIT_MENU_ITEM_ICON));
         miDeleteClient.setGraphic(new ImageView(Constants.DELETE_MENU_ITEM_ICON));
-        
+
         miAddContact.setGraphic(new ImageView(Constants.ADD_MENU_ITEM_ICON));
         miEditContact.setGraphic(new ImageView(Constants.EDIT_MENU_ITEM_ICON));
         miDeleteContact.setGraphic(new ImageView(Constants.DELETE_MENU_ITEM_ICON));
-        
+
         miSettings.setGraphic(new ImageView(Constants.SETTING_MENU_ICON));
-        
+
         miAbout.setGraphic(new ImageView(Constants.ABOUT_MENU_ICON));
-        
+
         fillClientsList();
 
         populateTreeView(clientsList);
@@ -388,19 +398,19 @@ public class PostagiLayoutController implements Initializable {
             case Constants.SETTINGS_MENU_ITEM:
                 Properties props = getProperties();
                 String strCurrentSettings = "Not Set...";
-                
+
                 if (props != null) {
                     strCurrentSettings = props.getProperty(Constants.HOST_KEY);
                     currentTimerSpin = Integer.valueOf(
                             props.getProperty(Constants.SPIN_KEY));
                 }
-                Optional<Map<String,String>> settingResult = 
-                        Utils.showSettingsDialog(strCurrentSettings, currentTimerSpin);
+                Optional<Map<String, String>> settingResult
+                        = Utils.showSettingsDialog(strCurrentSettings, currentTimerSpin);
                 settingResult.ifPresent((result) -> {
                     if (settingResult.get().isEmpty()) {
-                        setProperties(Constants.HOST_DEFAULT_VALUE,currentTimerSpin);
+                        setProperties(Constants.HOST_DEFAULT_VALUE, currentTimerSpin);
                     } else {
-                        setProperties(result.get(Constants.HOST_KEY), 
+                        setProperties(result.get(Constants.HOST_KEY),
                                 Integer.valueOf(result.get(Constants.SPIN_KEY)));
                     }
                 });
@@ -504,60 +514,98 @@ public class PostagiLayoutController implements Initializable {
     public void sendHandler(ActionEvent event) {
         if (getSelectedMails().isEmpty()) {
             Utils.showErrorDialog("Empty Mail List", "No mails selected!");
-        }else{
-        //create service to send mails in background and show progress dialog for the user
-        javafx.concurrent.Service<Void> service = new javafx.concurrent.Service<Void>() {
-            @Override
-            protected Task<Void> createTask() {
-                return new Task<Void>() {
-                    int mailsSize = getSelectedMails().size();
+        } else {
+            Queue<String> queue = new ConcurrentLinkedQueue<>(getSelectedMails());
+            SendMailsService service = new SendMailsService();
+            //reset the counter.
+            counter = 0;
+            //get the timer spin from settings file, it's in minutes, if not set
+            //take the default which is 0.
+            int spin = Integer.valueOf(
+                    getProperties().getProperty(Constants.SPIN_KEY));
+            //using package javafx.util.Duration, it's in msec
+            Duration duration = new Duration(spin * 60 * 1000);
 
-                    @Override
-                    protected Void call() throws Exception {
-                        //update the progress dialog message
-                        updateMessage("Preparing To Send The Mails . . .");
-                        //update the progress of progress dialog from 0 to size of mails
-                        updateProgress(0, mailsSize);
-                        //loop on mails and send them one by one and update the progress dialog.
-                        //to show how many mails are sent.
-                        for (int i = 0; i < mailsSize; i++) {
-                            if (sendMail(getSelectedMails().get(i))) {
-                                updateProgress(i + 1, mailsSize);
-                                StringBuilder statusMsg = new StringBuilder();
-                                statusMsg.append("Sending to <")
-                                        .append(getSelectedMails().get(i))
-                                        .append(">. ")
-                                        .append("Sent ")
-                                        .append(i)
-                                        .append("/")
-                                        .append(mailsSize)
-                                        .append(" mails...");
-                                updateMessage(statusMsg.toString());
-                            }
-                        }
-                        updateMessage("Send all.");
-                        Thread.sleep(2000);
-                        return null;
-                    }
-                };
-            }
-        };
-        //close the service on succeed
-        service.setOnSucceeded(v -> {
-            //hide the statusbar when done.
-            hbStatusBar.setVisible(false);
-        });
-        //show the status bar when sending mails.
-        hbStatusBar.setVisible(true);
+            //the period between start of sending mail and start of sending the next one.
+            service.setPeriod(duration);
 
-        //bind the text and progress of status bar with message and progress of service
-        lblStatus.textProperty().unbind();
-        lblStatus.textProperty().bind(service.messageProperty());
-        progStatus.progressProperty().unbind();
-        progStatus.progressProperty().bind(service.progressProperty());
+            //set the delay of starting or restarting the service.
+            //it's zero so it starts/restarts immediately.
+            //service.setDelay(Duration.ZERO);
+            //on failure restart the service
+            service.setRestartOnFailure(true);
+            //set max try on fail
+            service.setMaximumFailureCount(1);
 
-        //start the service.
-        service.start();
+            service.setQueue(queue);
+
+            hbStatusBar.setVisible(true);
+
+            service.setOnReady((WorkerStateEvent readyEvent) -> {
+                System.out.println(LocalTime.now());
+                System.out.println(readyEvent.getEventType().getName());
+
+                if (service.isAllDone) {
+                    //hide the status bar when finish sending all selected mails
+                    service.cancel();
+                }
+            });
+            //update the message of status bar on scheduled state of service
+            //which is waiting to the period to be expired.
+            service.setOnScheduled((WorkerStateEvent scheduledEvent) -> {
+                System.out.println(LocalTime.now());
+                System.out.println(scheduledEvent.getEventType().getName());
+                lblStatus.textProperty().unbind();
+                lblStatus.setText("Waiting to send next mail...");
+
+            });
+            service.setOnRunning((WorkerStateEvent runningEvent) -> {
+                System.out.println(LocalTime.now());
+                System.out.println(runningEvent.getEventType().getName());
+                lblStatus.textProperty().unbind();
+                lblStatus.textProperty().bind(service.messageProperty());
+            });
+            service.setOnSucceeded((WorkerStateEvent succeededEvent) -> {
+                System.out.println(LocalTime.now());
+                System.out.println(succeededEvent.getEventType().getName());
+            });
+            service.setOnFailed((WorkerStateEvent failedEvent) -> {
+                System.out.println(LocalTime.now());
+                System.out.println(failedEvent.getEventType().getName());
+                System.out.println(failedEvent.getSource().getMessage());
+                lblStatus.textProperty().unbind();
+                lblStatus.textProperty().bind(service.messageProperty());
+            });
+
+            service.setOnCancelled((WorkerStateEvent cancelledEvent) -> {
+                System.out.println("GET in CANCELLED state...");
+                
+                hbStatusBar.setVisible(false);
+            });
+
+            lblCancelAll.setOnMouseClicked((MouseEvent cancelClicked) -> {
+                System.out.println("cancel pressed");
+                service.cancel();
+            });
+
+            lblSkip.setOnMouseClicked((MouseEvent skipClicked) -> {
+                String skipMail = service.queue.poll();
+                if (skipMail != null) {
+                    service.queue.offer(skipMail);
+                    service.restart();
+                    hbStatusBar.setVisible(true);
+                } else {
+                    service.cancel();
+                }
+            });
+
+            //bind the text and progress of status bar with message and progress of service
+            lblStatus.textProperty().unbind();
+            lblStatus.textProperty().bind(service.messageProperty());
+            progStatus.progressProperty().unbind();
+            progStatus.progressProperty().bind(service.progressProperty());
+
+            service.start();
         }
     }
 
@@ -835,9 +883,15 @@ public class PostagiLayoutController implements Initializable {
                     }
 
                     message.setContent(multiPart);
-                    //send the message
-                    Transport.send(message);
-                    return true;
+                    try {
+                        //send the message
+                        Transport.send(message);
+                        return true;
+                    } catch (Exception ex) {
+                        Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+                        Utils.showExceptionDialog("Message Failure...", "Exception happen while sending message!", ex);
+                        return false;
+                    }
                 } else {
                     Utils.showErrorDialog("Session Error...", "Cannot open session to send mails!");
                     return false;
@@ -845,7 +899,7 @@ public class PostagiLayoutController implements Initializable {
             }
         } catch (MessagingException ex) {
             Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-            Utils.showExceptionDialog("Message Failure...", "Exception happen while send message!", ex);
+            Utils.showExceptionDialog("Message Failure...", "Exception happen while sending message!", ex);
             return false;
         }
         return false;
@@ -885,6 +939,7 @@ public class PostagiLayoutController implements Initializable {
      */
     private Session getSession(String user, String password) {
         if (getProperties() != null) {
+            try{
             Session session = Session.getDefaultInstance(getProperties(), new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
@@ -892,6 +947,10 @@ public class PostagiLayoutController implements Initializable {
                 }
             });
             return session;
+            }catch(Exception ex){
+                Utils.showExceptionDialog("Session Error", "Exception Details: ", ex);
+                return null;
+            }
         }
         return null;
     }
@@ -934,7 +993,7 @@ public class PostagiLayoutController implements Initializable {
                 props.setProperty(Constants.HOST_KEY, host);
                 props.setProperty(Constants.AUTH_KEY, Constants.AUTH_VALUE);
                 props.setProperty(Constants.SPIN_KEY, String.valueOf(timerSpin));
-                
+
                 props.storeToXML(new BufferedOutputStream(new FileOutputStream(propFile)), host);
             } catch (IOException ex) {
                 Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
@@ -1015,4 +1074,87 @@ public class PostagiLayoutController implements Initializable {
         return false;
     }
 
+    /**
+     * Scheduled Service class to send mails automatically with some conditions,
+     * like period, delay. All conditions are specified later after creating the
+     * object of this class.
+     */
+    class SendMailsService extends ScheduledService<Void> {
+
+        int totalMails = getSelectedMails().size();
+        private String mail;
+        Queue<String> queue;
+        private boolean isAllDone;
+
+        private String getMail() {
+            return (queue.isEmpty()) ? null : queue.peek();
+        }
+
+        public void setQueue(Queue<String> queue) {
+            this.queue = queue;
+        }
+
+        public boolean isDone() {
+            return isAllDone;
+        }
+
+        @Override
+        protected void ready() {
+            super.ready(); //To change body of generated methods, choose Tools | Templates.
+            this.mail = getMail();
+        }
+
+        @Override
+        protected void failed() {
+            super.failed(); //To change body of generated methods, choose Tools | Templates.
+            String fMail = queue.poll();
+            queue.offer(fMail);
+        }
+
+        @Override
+        public boolean cancel() {
+            queue.clear();
+            return super.cancel(); //To change body of generated methods, choose Tools | Templates.
+        }
+        
+        
+
+        @Override
+        protected Task<Void> createTask() {
+            return new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+
+                    //double workDone = workDoneProperty().doubleValue();
+                    //double totalWork = totalWorkProperty().doubleValue();
+                    //update the progress of progress of sending mail
+                    //update the message of process.
+                    String mMail = getMail();
+                    if (mMail != null) {
+                        updateMessage("Sending to <" + mMail + ">");
+
+                        //send the mail, if succeded update the message and progress bar of UI
+                        if (sendMail(mMail)) {
+                            //create the message
+                            StringBuilder statusMsg = new StringBuilder();
+                            statusMsg.append("Sent ")
+                                    .append(counter + 1)
+                                    .append("/")
+                                    .append(totalMails)
+                                    .append(" mails...");
+                            //update the UI message
+                            updateMessage(statusMsg.toString());
+                            ++counter;
+                            queue.poll();
+                            isAllDone = queue.isEmpty();
+                        } else {
+                            updateMessage("Fail to send mail <" + mMail + ">");
+                        }
+                    }
+                    return null;
+                }
+            };
+        }
+
+    }
 }

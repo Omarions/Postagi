@@ -256,10 +256,16 @@
                      <children>
                         <HBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
                            <children>
-                              <Label fx:id="lblStatus" prefHeight="21.0" prefWidth="328.0" text="Label" />
+                              <Label fx:id="lblStatus" prefHeight="21.0" prefWidth="328.0" />
                            </children>
                         </HBox>
-                        <ProgressBar fx:id="progStatus" prefHeight="17.0" prefWidth="246.0" progress="0.0" />
+                        <HBox spacing="5.0">
+                           <children>
+                              <Label fx:id="lblCancelAll" styleClass="linked-label" text="Cancel All" />
+                              <Label fx:id="lblSkip" styleClass="linked-label" text="Skip" />
+                              <ProgressBar fx:id="progStatus" prefHeight="17.0" prefWidth="246.0" progress="0.0" />
+                           </children>
+                        </HBox>
                      </children>
                      <opaqueInsets>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

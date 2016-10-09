@@ -75,6 +75,13 @@
 .transperant-window{
     -fx-background-color: transparent;
 }
+.linked-label{
+    -fx-underline: true;
+    -fx-text-fill: blue;
+}
+.linked-label:pressed{
+    -fx-text-fill: darkmagenta;
+}
 #deleteIcon{
     -fx-image: url('/images/delete_inactive.png');
     -fx-background-insets: 0 0 -1 0,0,1;

@@ -2,7 +2,7 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
 <comment>mail.ngc-eg.com</comment>
-<entry key="timer.spin">5</entry>
+<entry key="timer.spin">1</entry>
 <entry key="mail.smtp.auth">true</entry>
 <entry key="mail.smtp.host">mail.ngc-eg.com</entry>
 </properties>

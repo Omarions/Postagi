@@ -19,6 +19,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -126,9 +127,9 @@ public class Utils {
         tfNewServer.setPromptText("Set the new server...");
         tfNewServer.getStyleClass().add("textField");
         
-        TextField tfDuration = new TextField();
-        tfDuration.setPromptText("Set the timer spin (in minutes)");
-        Spinner spTimer = new Spinner(currentSpin, Integer.MAX_VALUE, 0, 1);
+        Spinner spTimer = new Spinner(0, Integer.MAX_VALUE, 0, 1);
+        spTimer.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, Integer.MAX_VALUE, currentSpin));
+        spTimer.setEditable(true);
         spTimer.getStyleClass().add("textField");
         spTimer.setTooltip(new Tooltip("Set the duration between sending mails in minutes"));
                 
