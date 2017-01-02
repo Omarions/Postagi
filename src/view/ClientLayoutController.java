@@ -158,7 +158,7 @@ public class ClientLayoutController implements Initializable {
         //check if the client is present, save to db and exit,
         //otherwise (the optional is empty) show alert message for the required fields.
         if(!client.isPresent()) {
-            Alert alert = new Alert(Alert.AlertType.ERROR, "Name and Emails are required fields!", ButtonType.OK);
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Name is required field!", ButtonType.OK);
             alert.setHeaderText("Required Fields Error...");
             alert.showAndWait();
         }
@@ -171,7 +171,7 @@ public class ClientLayoutController implements Initializable {
             });
         } else {
             client.ifPresent((mClient) -> {
-                mCClient.update(client.get());
+                mCClient.update(mClient);
                 Alert alert = new Alert(Alert.AlertType.INFORMATION, "The client saved successfully!", ButtonType.OK);
                 alert.setHeaderText("Save Client...");
                 alert.showAndWait();
