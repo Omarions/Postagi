@@ -1,13 +1,13 @@
 .default{
     -fx-background-color: #9AD2FF;
-    -fx-font-family: "Bradley Hand ITC";
+    -fx-font-family: "Arial Narrow";
     -fx-font-size: 16px;
 }
 .title-bar{
     -fx-background-color:#9AD2FF; 
 }
 .title, .close-button, .min-button, .menu-bar{
-    -fx-font-family: "Bradley Hand ITC";
+    -fx-font-family: "Arial Narrow";
     -fx-font-weight: 700;
 }
 .title{

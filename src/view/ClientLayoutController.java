@@ -125,6 +125,7 @@ public class ClientLayoutController implements Initializable {
         int id = (editableClient != null)? editableClient.getId() : 0;
         String address = (tfAddress.getText().isEmpty()) ? "N/A" : tfAddress.getText();
         String website = (tfWebsite.getText().isEmpty()) ? "N/A" : tfWebsite.getText();
+        String mails = (tfMails.getText().isEmpty()) ? "N/A" : tfMails.getText();
         String tel = (tfTel.getText().isEmpty()) ? "N/A" : tfTel.getText();
         String fax = (tfFax.getText().isEmpty()) ? "N/A" : tfFax.getText();
         String tags = (tfTags.getText().isEmpty()) ? "N/A" : tfTags.getText();
@@ -135,7 +136,7 @@ public class ClientLayoutController implements Initializable {
             mClient.setName(tfName.getText());
             mClient.setAddress(address);
             mClient.setWebsite(website);
-            mClient.setEmails(tfMails.getText());
+            mClient.setEmails(mails);
             mClient.setTel(tel);
             mClient.setFax(fax);
             mClient.setTags(tags);
@@ -186,7 +187,7 @@ public class ClientLayoutController implements Initializable {
      * @return
      */
     private boolean validate() {
-        if (tfName.getText().isEmpty() || tfMails.getText().isEmpty()) {
+        if (tfName.getText().isEmpty()) {
             return false;
         }
         return true;

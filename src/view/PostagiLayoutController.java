@@ -5,6 +5,7 @@
  */
 package view;
 
+import com.sun.glass.ui.Screen;
 import controller.cClient;
 import controller.cContact;
 import java.awt.Desktop;
@@ -1022,7 +1023,7 @@ public class PostagiLayoutController implements Initializable {
     private boolean showDialog(String url, DialogType flag, Client updateClient, Contact updateContact) {
         FXMLLoader loader = new FXMLLoader();
         Stage dialogeStage = new Stage();
-
+        dialogeStage.setWidth(460);
         try {
             loader.setLocation(Postagi.class.getResource(url));
             AnchorPane page = (AnchorPane) loader.load();
@@ -1033,6 +1034,11 @@ public class PostagiLayoutController implements Initializable {
             dialogeStage.initModality(Modality.WINDOW_MODAL);
             dialogeStage.initOwner(Postagi.mainStage);
             dialogeStage.initStyle(StageStyle.TRANSPARENT);
+            double mainDilogWidht = Postagi.mainStage.getWidth();
+            double dialogWidth = dialogeStage.getWidth();
+            double totalWidth = mainDilogWidht + dialogWidth;
+            double screenWidth = Screen.getMainScreen().getWidth();
+            Postagi.mainStage.setX((screenWidth - totalWidth)/2);
             dialogeStage.setY(Postagi.mainStage.getY() + 48);
             dialogeStage.setX(Postagi.mainStage.getX() + Postagi.mainStage.getWidth() - 5);
             dialogeStage.setScene(scene);

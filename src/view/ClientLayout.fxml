@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane id="AnchorPane" prefHeight="453.0" prefWidth="501.0" styleClass="transperant-window" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="view.ClientLayoutController">
+<AnchorPane id="AnchorPane" maxHeight="453.0" maxWidth="501.0" minHeight="453.0" minWidth="501.0" prefHeight="453.0" prefWidth="501.0" styleClass="transperant-window" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="view.ClientLayoutController">
     <stylesheets>
         <URL value="@/css/style.css" />
     </stylesheets>
