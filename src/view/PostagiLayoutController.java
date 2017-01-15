@@ -6,6 +6,10 @@
 package view;
 
 import com.sun.glass.ui.Screen;
+import com.sun.mail.smtp.SMTPAddressFailedException;
+import com.sun.mail.smtp.SMTPAddressSucceededException;
+import com.sun.mail.smtp.SMTPSendFailedException;
+import com.sun.mail.smtp.SMTPTransport;
 import controller.cClient;
 import controller.cContact;
 import java.awt.Desktop;
@@ -85,8 +89,8 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.PasswordAuthentication;
+import javax.mail.SendFailedException;
 import javax.mail.Session;
-import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
@@ -97,6 +101,7 @@ import model.Contact;
 import postagi.Postagi;
 import utils.Constants;
 import utils.DialogType;
+import utils.STMPValidator;
 import utils.Utils;
 
 /**
@@ -155,6 +160,8 @@ public class PostagiLayoutController implements Initializable {
     private MenuItem miEditContact;
     @FXML
     private MenuItem miDeleteContact;
+    @FXML
+    private MenuItem miValidateEmail;
     @FXML
     private MenuItem miSettings;
     @FXML
@@ -393,6 +400,11 @@ public class PostagiLayoutController implements Initializable {
                     }
                 });
                 break;
+            case Constants.VALIDATE_EMAIL_MENU_ITEM:
+                System.out.println("Validate Emails");
+                validateEmails();
+                break;
+
             case Constants.SETTINGS_MENU_ITEM:
                 Properties props = getProperties();
                 String strCurrentSettings = "Not Set...";
@@ -510,10 +522,12 @@ public class PostagiLayoutController implements Initializable {
      */
     @FXML
     public void sendHandler(ActionEvent event) {
+
         if (getSelectedMails().isEmpty()) {
             Utils.showErrorDialog("Empty Mail List", "No mails selected!");
         } else {
             Queue<String> queue = new ConcurrentLinkedQueue<>(getSelectedMails());
+
             SendMailsService service = new SendMailsService();
             //reset the counter.
             counter = 0;
@@ -543,10 +557,6 @@ public class PostagiLayoutController implements Initializable {
                 System.out.println(LocalTime.now());
                 System.out.println(readyEvent.getEventType().getName());
 
-                if (service.isAllDone) {
-                    //hide the status bar when finish sending all selected mails
-                    service.cancel();
-                }
             });
             //update the message of status bar on scheduled state of service
             //which is waiting to the period to be expired.
@@ -566,6 +576,9 @@ public class PostagiLayoutController implements Initializable {
             service.setOnSucceeded((WorkerStateEvent succeededEvent) -> {
                 System.out.println(LocalTime.now());
                 System.out.println(succeededEvent.getEventType().getName());
+                if (service.isDone()) {
+                    service.cancel();
+                }
             });
             service.setOnFailed((WorkerStateEvent failedEvent) -> {
                 System.out.println(LocalTime.now());
@@ -577,7 +590,7 @@ public class PostagiLayoutController implements Initializable {
 
             service.setOnCancelled((WorkerStateEvent cancelledEvent) -> {
                 System.out.println("GET in CANCELLED state...");
-                
+
                 hbStatusBar.setVisible(false);
             });
 
@@ -605,6 +618,7 @@ public class PostagiLayoutController implements Initializable {
 
             service.start();
         }
+
     }
 
     /**
@@ -828,9 +842,11 @@ public class PostagiLayoutController implements Initializable {
      * Send mail code using JavaMail API
      */
     private boolean sendMail(String to) {
+        boolean verbose = true;
         Optional<Map<String, List<String>>> parts = createMail();
         try {
             if (parts.isPresent()) {
+
                 //Extract parts from the map.
                 final String FROM = parts.get().get("from").get(0);
                 final String PASSWORD = parts.get().get("password").get(0);
@@ -849,7 +865,8 @@ public class PostagiLayoutController implements Initializable {
                 }
 
                 //Create the session for sending the message.
-                if (getSession(FROM, PASSWORD) != null) {
+                Session session = getSession(FROM, PASSWORD);
+                if (session != null) {
                     //create the message object to be sent
                     MimeMessage message = new MimeMessage(getSession(FROM, PASSWORD));
                     //set the parts of the message
@@ -881,23 +898,82 @@ public class PostagiLayoutController implements Initializable {
                     }
 
                     message.setContent(multiPart);
+
+                    //send the message
+                    //Transport.send(message);
+                    SMTPTransport t = (SMTPTransport) session.getTransport("smtps");
                     try {
-                        //send the message
-                        Transport.send(message);
-                        return true;
-                    } catch (Exception ex) {
-                        Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-                        Utils.showExceptionDialog("Message Failure...", "Exception happen while sending message!", ex);
-                        return false;
+                        t.connect(Constants.HOST_DEFAULT_VALUE, FROM, PASSWORD);
+                        t.sendMessage(message, message.getAllRecipients());
+                    } finally {
+                        System.out.println("Response: " + t.getLastServerResponse());
+                        t.close();
                     }
+                    return true;
+
                 } else {
                     Utils.showErrorDialog("Session Error...", "Cannot open session to send mails!");
                     return false;
                 }
+
             }
-        } catch (MessagingException ex) {
-            Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
-            Utils.showExceptionDialog("Message Failure...", "Exception happen while sending message!", ex);
+        } catch (Exception e) {
+            //Logger.getLogger(PostagiLayoutController.class.getName()).log(Level.SEVERE, null, ex);
+            //Utils.showExceptionDialog("Message Failure...", "Exception happen while sending message!", ex);
+
+            /*
+	     * Handle SMTP-specific exceptions.
+             */
+            if (e instanceof SendFailedException) {
+                MessagingException sfe = (MessagingException) e;
+                if (sfe instanceof SMTPSendFailedException) {
+                    SMTPSendFailedException ssfe
+                            = (SMTPSendFailedException) sfe;
+                    System.out.println("SMTP SEND FAILED:");
+                    if (verbose) {
+                        System.out.println(ssfe.toString());
+                    }
+                    System.out.println("  Command: " + ssfe.getCommand());
+                    System.out.println("  RetCode: " + ssfe.getReturnCode());
+                    System.out.println("  Response: " + ssfe.getMessage());
+                } else if (verbose) {
+                    System.out.println("Send failed: " + sfe.toString());
+                }
+                Exception ne;
+                while ((ne = sfe.getNextException()) != null
+                        && ne instanceof MessagingException) {
+                    sfe = (MessagingException) ne;
+                    if (sfe instanceof SMTPAddressFailedException) {
+                        SMTPAddressFailedException ssfe
+                                = (SMTPAddressFailedException) sfe;
+                        System.out.println("ADDRESS FAILED:");
+                        if (verbose) {
+                            System.out.println(ssfe.toString());
+                        }
+                        System.out.println("  Address: " + ssfe.getAddress());
+                        System.out.println("  Command: " + ssfe.getCommand());
+                        System.out.println("  RetCode: " + ssfe.getReturnCode());
+                        System.out.println("  Response: " + ssfe.getMessage());
+                    } else if (sfe instanceof SMTPAddressSucceededException) {
+                        System.out.println("ADDRESS SUCCEEDED:");
+                        SMTPAddressSucceededException ssfe
+                                = (SMTPAddressSucceededException) sfe;
+                        if (verbose) {
+                            System.out.println(ssfe.toString());
+                        }
+                        System.out.println("  Address: " + ssfe.getAddress());
+                        System.out.println("  Command: " + ssfe.getCommand());
+                        System.out.println("  RetCode: " + ssfe.getReturnCode());
+                        System.out.println("  Response: " + ssfe.getMessage());
+                    }
+                }
+            } else {
+                System.out.println("Got Exception: " + e);
+                if (verbose) {
+                    e.printStackTrace();
+                }
+            }
+
             return false;
         }
         return false;
@@ -937,15 +1013,15 @@ public class PostagiLayoutController implements Initializable {
      */
     private Session getSession(String user, String password) {
         if (getProperties() != null) {
-            try{
-            Session session = Session.getDefaultInstance(getProperties(), new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(user, password);
-                }
-            });
-            return session;
-            }catch(Exception ex){
+            try {
+                Session session = Session.getDefaultInstance(getProperties(), new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(user, password);
+                    }
+                });
+                return session;
+            } catch (Exception ex) {
                 Utils.showExceptionDialog("Session Error", "Exception Details: ", ex);
                 return null;
             }
@@ -1024,6 +1100,12 @@ public class PostagiLayoutController implements Initializable {
         FXMLLoader loader = new FXMLLoader();
         Stage dialogeStage = new Stage();
         dialogeStage.setWidth(460);
+
+        double mainDilogWidht = Postagi.mainStage.getWidth();
+        double dialogWidth = dialogeStage.getWidth();
+        double totalWidth = mainDilogWidht + dialogWidth;
+        double screenWidth = Screen.getMainScreen().getWidth();
+
         try {
             loader.setLocation(Postagi.class.getResource(url));
             AnchorPane page = (AnchorPane) loader.load();
@@ -1034,11 +1116,8 @@ public class PostagiLayoutController implements Initializable {
             dialogeStage.initModality(Modality.WINDOW_MODAL);
             dialogeStage.initOwner(Postagi.mainStage);
             dialogeStage.initStyle(StageStyle.TRANSPARENT);
-            double mainDilogWidht = Postagi.mainStage.getWidth();
-            double dialogWidth = dialogeStage.getWidth();
-            double totalWidth = mainDilogWidht + dialogWidth;
-            double screenWidth = Screen.getMainScreen().getWidth();
-            Postagi.mainStage.setX((screenWidth - totalWidth)/2);
+
+            Postagi.mainStage.setX((screenWidth - totalWidth) / 2);
             dialogeStage.setY(Postagi.mainStage.getY() + 48);
             dialogeStage.setX(Postagi.mainStage.getX() + Postagi.mainStage.getWidth() - 5);
             dialogeStage.setScene(scene);
@@ -1077,6 +1156,24 @@ public class PostagiLayoutController implements Initializable {
         return false;
     }
 
+    private void validateEmails() {
+        System.out.println("Start validation...");
+        List<String> mailList = getSelectedMails();
+        System.out.println("mails selected size = " + mailList.size());
+        if (!tfFrom.getText().isEmpty()) { 
+            mailList.forEach((mail) -> {
+                System.out.println("Mail <" + mail + "> is validating...");
+                if(STMPValidator.isAddressValid(mail, tfFrom.getText())){
+                    System.out.println("Mail <" + mail + "> is valid!");
+                }else{
+                    System.out.println("Mail <" + mail + "> is not valid!");
+                }
+                
+            });
+        }
+        System.out.println("Finished validation.");
+    }
+
     /**
      * Scheduled Service class to send mails automatically with some conditions,
      * like period, delay. All conditions are specified later after creating the
@@ -1087,7 +1184,7 @@ public class PostagiLayoutController implements Initializable {
         int totalMails = getSelectedMails().size();
         private String mail;
         Queue<String> queue;
-        private boolean isAllDone;
+        private boolean isAllDone = false;
 
         private String getMail() {
             return (queue.isEmpty()) ? null : queue.peek();
@@ -1105,6 +1202,7 @@ public class PostagiLayoutController implements Initializable {
         protected void ready() {
             super.ready(); //To change body of generated methods, choose Tools | Templates.
             this.mail = getMail();
+
         }
 
         @Override
@@ -1119,8 +1217,6 @@ public class PostagiLayoutController implements Initializable {
             queue.clear();
             return super.cancel(); //To change body of generated methods, choose Tools | Templates.
         }
-        
-        
 
         @Override
         protected Task<Void> createTask() {

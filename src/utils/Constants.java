@@ -5,7 +5,6 @@
  */
 package utils;
 
-import java.util.Properties;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -28,6 +27,7 @@ public class Constants {
     public static final String EDIT_CONTACT_MENU_ITEM = "Edit Contact";
     public static final String DELETE_CLIENT_MENU_ITEM = "Delete Client";
     public static final String DELETE_CONTACT_MENU_ITEM = "Delete Contact";
+    public static final String VALIDATE_EMAIL_MENU_ITEM = "Validate Email";
     public static final String SETTINGS_MENU_ITEM = "Settings";
     public static final String PROP_FILE_URL = "settings.xml";
     

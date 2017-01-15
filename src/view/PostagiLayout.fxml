@@ -89,6 +89,7 @@
                     </items>
                   </Menu>
                   <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem fx:id="miValidateEmail" mnemonicParsing="false" onAction="#menusEventHandler" text="Validate Email" />
                   <MenuItem id="mbSettings" fx:id="miSettings" mnemonicParsing="false" onAction="#menusEventHandler" text="Settings" />
             </items>
                <accelerator>
