@@ -696,9 +696,11 @@ public class PostagiLayoutController implements Initializable {
      */
     private List<String> extractMails(String eMails) {
         List<String> mails = new ArrayList<>();
-        StringTokenizer tokenizer = new StringTokenizer(eMails, ";");
-        while (tokenizer.hasMoreTokens()) {
-            mails.add(tokenizer.nextToken().trim());
+        if (!"n/a".equalsIgnoreCase(eMails)) {
+            StringTokenizer tokenizer = new StringTokenizer(eMails, ";");
+            while (tokenizer.hasMoreTokens()) {
+                mails.add(tokenizer.nextToken().trim());
+            }
         }
         return mails;
     }
@@ -1057,7 +1059,7 @@ public class PostagiLayoutController implements Initializable {
      * set the values of host to the properties object and write it to the
      * settings file
      *
-     * @param host the smtp server
+     * @param host the SMTP server
      */
     private void setProperties(String host, int timerSpin) {
         Properties props = new Properties();
@@ -1160,15 +1162,15 @@ public class PostagiLayoutController implements Initializable {
         System.out.println("Start validation...");
         List<String> mailList = getSelectedMails();
         System.out.println("mails selected size = " + mailList.size());
-        if (!tfFrom.getText().isEmpty()) { 
+        if (!tfFrom.getText().isEmpty()) {
             mailList.forEach((mail) -> {
                 System.out.println("Mail <" + mail + "> is validating...");
-                if(STMPValidator.isAddressValid(mail, tfFrom.getText())){
+                if (STMPValidator.isAddressValid(mail, tfFrom.getText())) {
                     System.out.println("Mail <" + mail + "> is valid!");
-                }else{
+                } else {
                     System.out.println("Mail <" + mail + "> is not valid!");
                 }
-                
+
             });
         }
         System.out.println("Finished validation.");
@@ -1231,7 +1233,7 @@ public class PostagiLayoutController implements Initializable {
                     String mMail = getMail();
                     if (mMail != null) {
                         updateMessage("Sending to <" + mMail + ">");
-
+                        System.out.println("Sending to <" + mMail + ">...");
                         //send the mail, if succeded update the message and progress bar of UI
                         if (sendMail(mMail)) {
                             //create the message
